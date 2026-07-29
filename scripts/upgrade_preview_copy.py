@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Upgrade a gzh-design preview to copy explicit rich HTML.
 
 The current gzh-design preview uses a DOM selection plus execCommand("copy").
