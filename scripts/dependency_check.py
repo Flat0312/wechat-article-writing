@@ -34,13 +34,16 @@ STAGE_RULES = {
     "learning": {"required": ["wechat-style-learning"]},
     "cover": {"required": ["guizang-social-card-skill"]},
     "visual": {
-        "any": [["ian-xiaohei-illustrations", "baoyu-article-illustrator"]]
+        "any": [["ian-xiaohei-illustrations", "baoyu-article-illustrator"]],
+        "optional": ["imagegen"],
     },
     "visual-ian": {
-        "required": ["ian-xiaohei-illustrations", "imagegen"],
+        "required": ["ian-xiaohei-illustrations"],
+        "optional": ["imagegen"],
     },
     "visual-structured": {
-        "required": ["baoyu-article-illustrator", "imagegen"],
+        "required": ["baoyu-article-illustrator"],
+        "optional": ["imagegen"],
     },
     "html": {"required": ["gzh-design"]},
     "publish": {"required": ["cheat-on-content"]},
@@ -117,21 +120,26 @@ def _visual_runtime(discovered):
     available = {canonical_name(name) for name in discovered}
     routes = {
         "ian": {
-            "ready": {"ian-xiaohei-illustrations", "imagegen"} <= available,
-            "missing": sorted(
-                {"ian-xiaohei-illustrations", "imagegen"} - available
+            "ready": "ian-xiaohei-illustrations" in available,
+            "missing": (
+                []
+                if "ian-xiaohei-illustrations" in available
+                else ["ian-xiaohei-illustrations"]
             ),
         },
         "baoyu-article-illustrator": {
-            "ready": {"baoyu-article-illustrator", "imagegen"} <= available,
-            "missing": sorted(
-                {"baoyu-article-illustrator", "imagegen"} - available
+            "ready": "baoyu-article-illustrator" in available,
+            "missing": (
+                []
+                if "baoyu-article-illustrator" in available
+                else ["baoyu-article-illustrator"]
             ),
         },
     }
     return {
         "ready_routes": [name for name, value in routes.items() if value["ready"]],
         "routes": routes,
+        "missing_imagegen": [] if "imagegen" in available else ["imagegen"],
     }
 
 
@@ -154,28 +162,16 @@ def check_dependencies(stage, discovered, env=None):
         name for name in rules.get("optional", []) if name not in available_set
     ]
 
-    base_ok = not missing_required and not missing_any
-    runtime = None
-    ok = base_ok
-    if stage in {"visual", "visual-ian", "visual-structured"}:
-        runtime = _visual_runtime(discovered)
-        if stage == "visual":
-            runtime_ok = bool(runtime["ready_routes"])
-        elif stage == "visual-ian":
-            runtime_ok = runtime["routes"]["ian"]["ready"]
-        else:
-            runtime_ok = runtime["routes"]["baoyu-article-illustrator"]["ready"]
-        ok = base_ok and runtime_ok
     result = {
         "stage": stage,
-        "ok": ok,
+        "ok": not missing_required and not missing_any,
         "available": available,
         "missing_required": missing_required,
         "missing_any": missing_any,
         "optional_missing": optional_missing,
     }
-    if runtime is not None:
-        result["runtime"] = runtime
+    if stage in {"visual", "visual-ian", "visual-structured"}:
+        result["runtime"] = _visual_runtime(discovered)
     return result
 
 

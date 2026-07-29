@@ -474,7 +474,7 @@ def validate_article_project(root: Path) -> list[str]:
         for stage, value in status.items():
             if not isinstance(value, str) or value not in ALLOWED_STATUS:
                 errors.append(
-                    f"article-state.json: invalid status {stage}={value}"
+                    f"article-state.json: stage_status.{stage}={value} is invalid"
                 )
     artifacts = state.get("artifacts", {})
     if not isinstance(artifacts, dict):

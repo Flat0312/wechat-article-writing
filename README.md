@@ -39,9 +39,9 @@ git clone https://github.com/Flat0312/wechat-article-writing.git "$env:USERPROFI
 - `guizang-social-card-skill`
 - `ian-xiaohei-illustrations` 或 `baoyu-article-illustrator`
 - `gzh-design`
-- `imagegen`
+- `imagegen`（可选；正文配图路线会自行解析可用图片后端）
 
-完整的阶段依赖和安装提示见 [SKILL.md](SKILL.md)。系统还需要 Git 和 Python 3。
+完整的阶段依赖和安装提示见 [references/execution.md](references/execution.md)。系统还需要 Git 和 Python 3。
 
 ## 验证
 
@@ -51,6 +51,11 @@ python scripts/dependency_check.py --stage account
 ```
 
 依赖检查反映本机安装状态；未安装可选或阶段依赖时，检查会明确列出缺失项。
+
+- `python scripts/upgrade_preview_copy.py <output/article-preview.html>` 现在接受稳定但实现略有差异的 `gzhCopy` 预览复制函数；若已加固，它会幂等跳过。
+- `python scripts/validate_project.py article <文章目录>` 的 `stage_status` 校验错误现在会明确指出具体状态键，例如 `stage_status.brief=soon is invalid`。
+- 正文视觉预检把 Ian/Baoyu 作为二选一轨道，并把 `imagegen` 仅作为可选提示；不会因缺少备用轨道或独立 `imagegen` Skill 而误阻断。
+- 正文配图改按单个认知锚点选择单一路线，明确把 Ian 用于隐喻/情绪/叙事转折，把 `baoyu-article-illustrator` 用于结构/层级/证据数据。
 
 ## 安全与发布边界
 
@@ -65,6 +70,7 @@ python scripts/dependency_check.py --stage account
 agents/       Codex 界面元数据
 assets/       账号与文章项目模板
 references/   状态、路由、质量门禁和发布契约
+references/execution.md 详细执行手册
 scripts/      依赖检查、状态管理与项目验证脚本
 tests/        回归测试
 SKILL.md      Skill 主入口

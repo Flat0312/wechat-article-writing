@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Upgrade a gzh-design preview to copy explicit rich HTML.
 
 The current gzh-design preview uses a DOM selection plus execCommand("copy").
@@ -22,8 +22,19 @@ UPGRADE_MARKER = '<script data-wechat-article-copy-upgrade="1">'
 WRAPPER_SIGNATURE = "window.gzhCopy = async function wechatArticleRichCopy()"
 SCRIPT_BLOCK = re.compile(r"(?is)<script(?:\s[^>]*)?>(.*?)</script>")
 COPY_FUNCTION = re.compile(r"(?m)^[ \t]*function gzhCopy\(\)\s*\{")
+EXPECTED_COPY_FUNCTION_TEXT = (
+    "function gzhCopy() {\n"
+    "  const selection = window.getSelection();\n"
+    "  if (!selection.rangeCount) {\n"
+    "    return false;\n"
+    "  }\n"
+    "  document.execCommand('copy');\n"
+    "  return true;\n"
+    "}\n"
+)
 KNOWN_GZH_COPY_SHA256 = {
-    "e575eedeb599b666f9fa09f35bec432b78f0081b5015ae17723e95e5290d02c8"
+    "e575eedeb599b666f9fa09f35bec432b78f0081b5015ae17723e95e5290d02c8",
+    "a670c73a714c02e2e3e75c9a84c2eb16a6e31a5951ecf55e25da1e6b9db57c18"
 }
 
 WRAPPER = """
@@ -158,7 +169,10 @@ def upgrade_preview(path: Path) -> bool:
     if "id=\"gzh-content\"" not in original or "gzhCopyBtn" not in original:
         raise ValueError("preview does not contain the expected gzhCopy controls")
     if not _has_recognized_copy_function(original):
-        raise ValueError("preview does not contain the expected gzhCopy function")
+        raise ValueError(
+            "preview does not contain an expected gzhCopy function; "
+            "update EXPECTED_COPY_FUNCTION_TEXT and KNOWN_GZH_COPY_SHA256"
+        )
 
     body_end = original.lower().rfind("</body>")
     if body_end < 0:

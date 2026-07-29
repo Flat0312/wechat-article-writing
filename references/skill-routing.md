@@ -4,7 +4,7 @@
 
 | Skill | Responsibility | Rule |
 |---|---|---|
-| `cheat-on-content` | Init, topic decision, score, prediction, publish, retro, persona, rubric | Mandatory whenever the stage involves Cheat |
+| `cheat-on-content` | Init, topic decision, score, prediction, publish, retro, persona, rubric, benchmark import, migration | Mandatory whenever the stage involves Cheat |
 | `creator-buddy` | WeChat hits, competitors, cross-platform topic signals | Topic signal provider |
 | `gzh-explosive-content-detector` | Recent WeChat viral samples, growth signals, headline patterns, niche terms | Mandatory WeChat branch for topic discovery; invoke through `creator-buddy` and preserve its generic-keyword confirmation rule |
 | `aihot` | Current AI news | Invoke for AI accounts or AI topics |
@@ -15,9 +15,14 @@
 | `guizang-social-card-skill` | One 21:9 WeChat main cover | Sole cover route; explicitly suppress its default 1:1 pair output |
 | `ian-xiaohei-illustrations` | Metaphor, emotion, identity, cognitive turns | Body illustration rail A |
 | `baoyu-article-illustrator` | Process, hierarchy, comparison, matrix, timeline, exact labels, evidence-backed data | Body illustration rail B |
+| `imagegen` | Optional Codex image Skill | Discovery hint only; each selected route resolves the actual runtime image backend, so absence does not by itself block `visual` |
 | `gzh-design` | WeChat HTML, preview, platform validation | Required for HTML completion; accept alias `gzh-design-skill` |
 
 `guizang-social-card-skill` is the sole cover route. This orchestrator overrides its general WeChat pair default: generate only the `21:9` main cover, with no `1:1` sharing card, pair preview, carousel, or Live Photo. Body illustrations remain a separate Ian/Baoyu pipeline.
+
+## Intentionally excluded Cheat routes
+
+Do not invoke `cheat-shoot`, `cheat-trends`, or `cheat-score-blind` directly from this orchestrator. `cheat-shoot` only belongs to video shooting registration; `cheat-trends` is replaced by the three-lane topic signal pipeline; `cheat-score-blind` must only be invoked internally by Cheat's score, predict, or bump workflow. Do not simulate these actions from this Skill.
 
 ## Excluded capabilities
 
@@ -38,11 +43,12 @@ If one signal provider fails, report its missing route or runtime requirement an
 
 ## Cheat routes
 
-- New long-term account: initialize as `long-essay`.
 - Existing account: status check; migrate only with authorization.
+- Schema migration: `cheat-migrate` only with explicit authorization or after migration in a copied working project.
+- Benchmark or imported evidence: `cheat-learn-from` for sample-scoped evidence, then obtain separate user confirmation before migrating or importing the sample scope and target Cheat project.
+- New long-term account: initialize as `long-essay`.
 - No topic: `cheat-seed`.
 - Candidate pool choice: `cheat-recommend`.
-- External trend candidate: collect externally, then score and rank through Cheat.
 - Existing topic or draft: `cheat-score`.
 - Approved final text: `cheat-predict`.
 - Publicly published article: `cheat-publish`.
@@ -51,7 +57,7 @@ If one signal provider fails, report its missing route or runtime requirement an
 - Rubric change: `cheat-bump`.
 - Progress: `cheat-status`.
 
-Every init, seed, recommend, score, predict, publish, retro, persona, bump, or status stage MUST invoke the root `cheat-on-content` Skill and let it select its internal workflow. Do not simulate these actions or reproduce, copy, or approximate its formulas and protocols.
+Every init, seed, recommend, score, predict, publish, retro, persona, bump, learn-from, migrate, or status stage MUST invoke the root `cheat-on-content` Skill and let it select its internal workflow. Do not invoke `cheat-score-blind` directly. Do not simulate these actions or reproduce, copy, or approximate its formulas and protocols.
 
 ## Content strategy and learning
 
@@ -83,7 +89,7 @@ For every body cognitive anchor, record route and reason in `visual-plan.md`.
 - If a passage has no independent information job, create no body image for it.
 - Profile visual rules outrank automatic recommendations.
 
-Run `dependency_check.py --stage visual` before planning. After routing each anchor, run `visual-ian` or `visual-structured` for the selected route. A failed route check blocks that asset; do not silently substitute a route that changes the information job.
+Run `dependency_check.py --stage visual` before planning. Then run the matching route preflight for each selected anchor: `visual-ian` for Ian, `visual-structured` for Baoyu. Treat `optional_missing: ["imagegen"]` as an informational hint and let the selected route resolve the actual runtime image backend. A missing route Skill or a route that cannot resolve any backend blocks that asset; do not silently substitute a route that changes the information job.
 
 ## HTML completion gate
 

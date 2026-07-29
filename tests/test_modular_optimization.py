@@ -300,8 +300,10 @@ class DeliveryContractTests(unittest.TestCase):
             },
         )
         self.assertTrue(ian["ok"])
+        self.assertEqual(ian["optional_missing"], [])
         self.assertEqual(ian["runtime"]["ready_routes"], ["ian"])
         self.assertTrue(baoyu["ok"])
+        self.assertEqual(baoyu["optional_missing"], [])
         self.assertEqual(
             baoyu["runtime"]["ready_routes"], ["baoyu-article-illustrator"]
         )
