@@ -5,10 +5,11 @@
 | Skill | Responsibility | Rule |
 |---|---|---|
 | `cheat-on-content` | Init, topic decision, score, prediction, publish, retro, persona, rubric, benchmark import, migration | Mandatory whenever the stage involves Cheat |
+| `cheat-trends` | Configured trend-adapter collection, deduplication, and rough candidate scoring | Mandatory fourth topic-signal lane; invoke through root `cheat-on-content` |
 | `creator-buddy` | WeChat hits, competitors, cross-platform topic signals | Topic signal provider |
 | `gzh-explosive-content-detector` | Recent WeChat viral samples, growth signals, headline patterns, niche terms | Mandatory WeChat branch for topic discovery; invoke through `creator-buddy` and preserve its generic-keyword confirmation rule |
 | `aihot` | Current AI news | Invoke for AI accounts or AI topics |
-| `khazix-writer` | Khazix writing style | Mandatory for every article draft; no other writing style permitted |
+| `khazix-writer` | Drafting engine | Mandatory for every article draft; account `voice.md` and validated profile rules override its default stylistic habits |
 | `humanizer-zh` | AI-pattern editorial pass | Mandatory after draft and before final; remove AI traces after facts and structure stabilize |
 | `wechat-content-strategy` | Evidence-bound content enhancement, outline, writing parameters, editing anchors | Mandatory after topic/evidence and before Khazix drafting |
 | `wechat-style-learning` | Confirmed edit learning for long-term profiles | Invoke only on an explicit learn-from-edits request and persist only after confirmation |
@@ -22,7 +23,7 @@
 
 ## Intentionally excluded Cheat routes
 
-Do not invoke `cheat-shoot`, `cheat-trends`, or `cheat-score-blind` directly from this orchestrator. `cheat-shoot` only belongs to video shooting registration; `cheat-trends` is replaced by the three-lane topic signal pipeline; `cheat-score-blind` must only be invoked internally by Cheat's score, predict, or bump workflow. Do not simulate these actions from this Skill.
+Do not invoke `cheat-shoot` or `cheat-score-blind` directly from this orchestrator. `cheat-shoot` only belongs to video shooting registration; `cheat-score-blind` must only be invoked internally by Cheat's score, predict, or bump workflow. Topic discovery must invoke root `cheat-on-content` and let it route to `cheat-trends` as the fourth signal lane. Do not simulate these actions from this Skill.
 
 ## Excluded capabilities
 
@@ -35,9 +36,10 @@ Run topic discovery as a fan-in pipeline. Signal providers never make the final 
 1. Invoke root `creator-buddy` for cross-platform signals. For Xiaohongshu keyword heat, prefer its `xiaohongshu-search` route; use `global-content-search` and Agent Reach only when note details, comments, or creator history are needed.
 2. In the same `creator-buddy` run, explicitly invoke `gzh-explosive-content-detector` for recent WeChat viral samples. If it classifies the input as a generic keyword, stop and obtain the required expansion choice before continuing the pipeline.
 3. For an AI account or AI-related topic, also invoke root `aihot` for current AI signals. Preserve every original URL and treat generated summaries as discovery aids, not verified evidence.
-4. Normalize and deduplicate all returned items before Cheat. Each candidate MUST retain `title`, `source`, `snapshot_text`, `snapshot_at`, and `url` when available. Merge cross-platform coverage of the same event into one candidate while retaining all source records; repeated coverage is not independent confirmation.
-5. Submit the normalized pool to root `cheat-on-content`. Use `cheat-recommend` for a populated candidate pool, `cheat-score` for an existing topic or draft, and `cheat-seed` only when no topic or usable pool exists. Cheat owns scoring and ranking.
-6. Show Cheat's scored recommendation, rationale, anchors, risks, and retained source provenance. The topic stage remains `awaiting_confirmation` until the user confirms the topic angle.
+4. Invoke root `cheat-on-content` and let it route to `cheat-trends`, using the account's enabled adapters to add broad trend signals. Treat adapter overlap with `aihot` or `creator-buddy` as duplicate coverage, not independent confirmation.
+5. Normalize and deduplicate all returned items before the final Cheat recommendation. Each candidate MUST retain `title`, `source`, `snapshot_text`, `snapshot_at`, and `url` when available. Merge cross-platform coverage of the same event into one candidate while retaining all source records; repeated coverage is not independent confirmation.
+6. Submit the normalized pool to root `cheat-on-content`. Use `cheat-recommend` for a populated candidate pool, `cheat-score` for an existing topic or draft, and `cheat-seed` only when no topic or usable pool exists. Cheat owns scoring and ranking.
+7. Show Cheat's scored recommendation, rationale, anchors, risks, and retained source provenance. The topic stage remains `awaiting_confirmation` until the user confirms the topic angle.
 
 If one signal provider fails, report its missing route or runtime requirement and keep its lane visibly incomplete. Do not fabricate results, silently substitute model memory, or present a partial pool as the full set of applicable signal lanes.
 
@@ -63,7 +65,7 @@ Every init, seed, recommend, score, predict, publish, retro, persona, bump, lear
 
 - Keep `wechat-article-writing` as the ordinary entrypoint and owner of preconditions, state, approvals, and recovery.
 - Invoke `wechat-content-strategy` only after the selected topic and evidence package exist. It may write `outline.md`; it may not collect untracked facts, draft the article, or change article state directly.
-- Keep `khazix-writer` as the sole author voice. Article-level parameters from the strategy module refine execution and never select an alternate persona.
+- Keep `khazix-writer` as the sole drafting engine. Account `voice.md` and validated profile rules override its default stylistic habits; article-level parameters from the strategy module refine execution and never select an alternate drafting engine.
 - Invoke `wechat-style-learning` only for a standard long-term profile after the user explicitly requests learning. It may update the optional edit ledger and generated learning blocks in `content-patterns.md`; it may not change `voice.md`, article artifacts, Cheat state, or current approvals.
 
 ## WeChat cover routing

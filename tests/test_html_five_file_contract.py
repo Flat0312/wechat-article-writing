@@ -1,0 +1,150 @@
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+
+import validate_project
+
+
+class HtmlFiveFileContractTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.project = Path(self.temp.name) / "article"
+        self.project.mkdir()
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def _write_state(
+        self,
+        *,
+        current_stage: str = "html",
+        html_status: str = "in_progress",
+    ) -> None:
+        stage_status = {
+            stage: "pending" for stage in validate_project.STAGES
+        }
+        stage_status["html"] = html_status
+        state = {
+            "schema_version": "1.0",
+            "article_id": "article-1",
+            "mode": "full",
+            "profile_ref": None,
+            "cheat_binding": "primary",
+            "current_stage": current_stage,
+            "stage_status": stage_status,
+            "artifacts": {},
+            "approvals": {},
+            "skill_routes": {},
+            "stale_artifacts": [],
+            "required_actions": [],
+            "created_at": "2026-07-30T12:00:00+08:00",
+            "updated_at": "2026-07-30T12:00:00+08:00",
+        }
+        (self.project / "article-state.json").write_text(
+            json.dumps(state, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
+    def _write_html_files(self, *, omit: str | None = None) -> None:
+        for relative in validate_project.HTML_DELIVERY_FILES:
+            if relative == omit:
+                continue
+            target = self.project.joinpath(*Path(relative).parts)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("verified\n", encoding="utf-8")
+
+    def test_new_html_work_reports_missing_copy_preview(self):
+        self._write_state()
+        self._write_html_files(omit="output/article-copy-preview.html")
+
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [
+                "output/article-copy-preview.html: "
+                "missing required HTML delivery file"
+            ],
+        )
+
+    def test_new_html_work_with_five_files_passes(self):
+        self._write_state()
+        self._write_html_files()
+
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [],
+        )
+
+    def test_completed_historical_article_is_grandfathered(self):
+        self._write_state(
+            current_stage="publish",
+            html_status="completed",
+        )
+
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [],
+        )
+
+
+def run_reverse_demo() -> int:
+    fixture = HtmlFiveFileContractTests()
+    fixture.setUp()
+    try:
+        fixture._write_state()
+        fixture._write_html_files(
+            omit="output/article-copy-preview.html"
+        )
+        command = [
+            sys.executable,
+            str(SKILL_ROOT / "scripts" / "validate_project.py"),
+            "article",
+            str(fixture.project),
+        ]
+
+        red = subprocess.run(
+            command,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        print("===== RED: missing article-copy-preview.html =====")
+        print(red.stdout.rstrip())
+        if red.stderr:
+            print(red.stderr.rstrip())
+        print(f"red_exit={red.returncode}")
+
+        (
+            fixture.project
+            / "output"
+            / "article-copy-preview.html"
+        ).write_text("verified\n", encoding="utf-8")
+        green = subprocess.run(
+            command,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        print("===== GREEN: five files present =====")
+        print(green.stdout.rstrip())
+        if green.stderr:
+            print(green.stderr.rstrip())
+        print(f"green_exit={green.returncode}")
+
+        return int(red.returncode != 1 or green.returncode != 0)
+    finally:
+        fixture.tearDown()
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["--reverse-demo"]:
+        raise SystemExit(run_reverse_demo())
+    unittest.main()

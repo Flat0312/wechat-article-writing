@@ -1,6 +1,6 @@
 ---
 name: wechat-article-writing
-description: Use when users ask to 写公众号文章、创作微信公众号推送、公众号长文改稿、选题与内容增强、账号初始化或导入、学习人工改稿、沉淀公众号文风、微信公众号21:9头图、微信公众号 HTML 排版、公开发布登记或文章数据复盘, including requests such as "帮我写公众号文章", "从零写一篇推送", "学习我的修改", or "导入公众号账号状态".
+description: Use when users ask to 写公众号文章、创作微信公众号推送、公众号长文改稿、AI/科技新闻资讯贴图、选题与内容增强、账号初始化或导入、学习人工改稿、沉淀公众号文风、微信公众号21:9头图、微信公众号 HTML 排版、公开发布登记或文章数据复盘, including requests such as "帮我写公众号文章", "做一组资讯贴图", "从零写一篇推送", "学习我的修改", or "导入公众号账号状态".
 ---
 
 ## 核心规则
@@ -16,8 +16,10 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 8. 第三方 Skill 是运行时依赖；不得把它们复制或 vendoring 到本 Skill。
 9. 选题与事实调研完成后，调用 `wechat-content-strategy` 完成内容增强和大纲；它不得自行补造证据或替代 Cheat 决策。
 10. 只有长期账号且用户明确要求学习改稿时，才调用 `wechat-style-learning`；候选规则经用户确认后才能持久化，并且只影响后续文章。
-11. 选题采用三路信号汇聚：`creator-buddy` 提供跨平台信号，并显式路由 `gzh-explosive-content-detector` 提供公众号爆款数据；若被分类为通用关键词，必须先取得用户确认的扩展选择后再继续。AI 账号或 AI 主题再调用 `aihot`。三路候选归一化、去重并保留来源后，必须交给根 `cheat-on-content` 评分和决策，再由用户确认选题角度。
-12. Cheat 子路由按公众号场景裁剪：`cheat-shoot` 只服务视频拍摄登记，不调用；热点采集由上述三路信号负责，不调用 `cheat-trends`；`cheat-score-blind` 只能由 Cheat 的 score、predict 或 bump 流程内部调用。
+11. 选题采用四路信号汇聚：`creator-buddy` 提供跨平台信号，并显式路由 `gzh-explosive-content-detector` 提供公众号爆款数据；若被分类为通用关键词，必须先取得用户确认的扩展选择后再继续。AI 账号或 AI 主题再调用 `aihot`；同时调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号已启用的热点适配器补充综合热榜。四路候选归一化、去重并保留来源后，必须交给根 `cheat-on-content` 评分和决策，再由用户确认选题角度。
+12. Cheat 子路由按公众号场景裁剪：`cheat-shoot` 只服务视频拍摄登记，不调用；`cheat-trends` 只负责补充、去重和粗筛热点候选，不替代 `creator-buddy`、公众号爆款或 `aihot`，也不替代最终的 Cheat 推荐；`cheat-score-blind` 只能由 Cheat 的 score、predict 或 bump 流程内部调用。
+13. 文章绑定标准长期账号画像时，在大纲和初稿前读取 `voice.md` 与 `content-patterns.md`。将 `voice.md` 和已验证规则作为硬约束，将待验证规则作为软参考；事实、证据、用户明确提供的经历、观点和当篇要求高于任何文风规则，不得为套用文风新增素材。`khazix-writer` 继续作为唯一起草引擎，但账号文风与已验证规则优先于其默认口吻。
+14. `content_kind=news-card` 的资讯贴图走独立轻量分支，不进入 long-essay 的 12 阶段 `article-state.json`、正式 v1 预测或 rubric 变更流程；发布与数据单独记录，不得混入 long-essay v1 校准池，试运行期不得进入 `wechat-style-learning`。
 
 ## 执行手册
 

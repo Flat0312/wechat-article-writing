@@ -45,6 +45,13 @@ ARTICLE_REQUIRED_KEYS = (
     "created_at",
     "updated_at",
 )
+HTML_DELIVERY_FILES = (
+    "output/article.html",
+    "output/article-preview.html",
+    "output/article-copy.html",
+    "output/article-copy-preview.html",
+    "output/html-qc.md",
+)
 FORBIDDEN_KEY_PARTS = (
     "secret",
     "token",
@@ -495,6 +502,25 @@ def validate_article_project(root: Path) -> list[str]:
                 errors.append(
                     "article-state.json: artifact "
                     f"{role} path must be portable and relative"
+                )
+    html_status = status.get("html") if isinstance(status, dict) else None
+    current_stage = state.get("current_stage")
+    html_stage_reached = (
+        current_stage in STAGES
+        and STAGES.index(current_stage) >= STAGES.index("html")
+    )
+    html_work_started = (
+        html_stage_reached
+        or html_status
+        in {"in_progress", "awaiting_confirmation", "failed", "stale"}
+        or (isinstance(artifacts, dict) and "html" in artifacts)
+    )
+    if html_status != "completed" and html_work_started:
+        for relative in HTML_DELIVERY_FILES:
+            target = root.joinpath(*PurePosixPath(relative).parts)
+            if not target.is_file():
+                errors.append(
+                    f"{relative}: missing required HTML delivery file"
                 )
     errors.extend(_json_safety_errors(state))
     return errors

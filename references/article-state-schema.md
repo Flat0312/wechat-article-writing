@@ -39,6 +39,12 @@ Allowed values are `pending`, `in_progress`, `awaiting_confirmation`, `completed
 
 Serialized artifact paths MUST be non-empty POSIX paths relative to the article project. They use `/`, may not contain a `..` component, and may not be absolute. Windows drive paths, UNC paths, root-relative paths, and any value containing a Windows backslash (`\`) are rejected. `profile_ref` is either null or follows the same portable relative-path rules.
 
+For HTML-complete long essays, the `html` artifact role is the manual-paste deliverable and its
+path MUST be `output/article-copy.html`. The associated HTML contract also retains
+`output/article.html`, `output/article-preview.html`, `output/article-copy-preview.html`, and
+`output/html-qc.md`; the validator enforces the five-file contract for current work while
+preserving completed historical projects.
+
 Article bodies and credentials are never embedded in state. Cheat prediction and retro files remain in the Cheat project and are referenced through the logical binding.
 
 ## Approval rules

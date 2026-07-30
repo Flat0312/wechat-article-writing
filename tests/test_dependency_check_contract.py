@@ -23,7 +23,7 @@ class DependencyCheckContractTests(unittest.TestCase):
         )
         self.assertFalse(result["ok"])
         self.assertEqual(
-            result["missing_required"], ["creator-buddy", "gzh-explosive-content-detector"]
+            result["missing_required"], ["cheat-trends", "creator-buddy", "gzh-explosive-content-detector"]
         )
 
     def test_publish_stage_passes_with_only_cheat(self):

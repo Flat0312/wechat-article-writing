@@ -20,6 +20,22 @@ Confirm one workspace before writing. Keep the portable profile and individual a
 <workspace>/articles/<YYYY-MM-DD-slug>/
 ```
 
+### Canonical workspace guard
+
+Before writing, read the selected workspace's `START-HERE.md` and project governance file when
+they exist. If the project declares a canonical root and a read-only backup:
+
+- write all new profiles, article state, predictions, publish records, and generated artifacts
+  only under the canonical root;
+- use the read-only backup only as a recovery or migration-check input;
+- never choose the backup as an output directory, write state into it, synchronize both
+  directions, or clean it up;
+- on Windows, resolve absolute paths and compare them case-insensitively before authorizing a
+  write.
+
+Pass only a target already confirmed inside the canonical root to
+`wechat-content-strategy` or `wechat-style-learning`.
+
 For an imported source, recommend a sibling workspace such as `<source-name>-articles`, but let the user choose it. The output may not be the source, its ancestor, or its descendant. 账号包与文章项目不得写入导入源目录。
 
 ## Import account

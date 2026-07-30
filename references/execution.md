@@ -17,6 +17,23 @@ description: Detailed execution runbook for dependency checks, project setup, ar
 
 用户给出目录时先只读检查。用户已经给出明确主题、素材或初稿时保留它们，不强迫回到选题起点。
 
+### 项目工具契约
+
+若已确认 workspace 根包含 `tools/project_ops.py` 与
+`docs/PROJECT-GOVERNANCE.md`，先读取项目治理约定，再执行通用流水线。项目命令
+只由本总控调用，两个子 Skill 只返回产物与结果，不自行刷新项目状态或 Skill 锁：
+
+- 日常一致性：`python tools/project_ops.py audit`
+- 看板刷新：`python tools/project_ops.py status --write`
+- 校准诊断：`python tools/project_ops.py calibration --write`
+- 热点收件箱：`python tools/project_ops.py trends --write`
+- 改稿候选：`python tools/project_ops.py writing-learning --write`
+- Skill 经兼容性测试后：`python tools/project_ops.py skill-lock --write`，随后再次
+  运行 `audit`
+
+只在对应项目阶段需要时运行带 `--write` 的命令。不得把项目命令分散给
+`wechat-content-strategy` 或 `wechat-style-learning`。
+
 ## 第二步：检查依赖
 
 将本 Skill 的绝对目录记为 `SKILL_ROOT`。所有 `scripts/` 和 `references/` 路径都相对 `SKILL_ROOT` 解析；执行时必须拼成绝对路径，不得依赖当前工作目录。按当前阶段运行：
@@ -80,6 +97,8 @@ python scripts/dependency_check.py --stage retro
 | `gzh-design` | 更新失败：本地有未提交的修改 |
 
 5. 更新完后跑一次全阶段依赖检查，确认没有因更新导致的 schema 不兼容或路由断裂。
+6. 若当前 workspace 启用上述项目工具契约，先完成兼容性测试，再运行
+   `skill-lock --write` 刷新 Skill 锁，最后运行 `audit`。
 
 搜索目录：`~/.codex/skills/`、`~/.claude/skills/`、`~/.agents/skills/`，以及 `WECHAT_ARTICLE_SKILL_ROOTS` 环境变量中的路径。只更新是 git 仓库的目录（有 `.git`），跳过手动复制的 skill。
 
@@ -114,6 +133,22 @@ python scripts/validate_project.py profile <账号目录>
 
 用户必须给出明确主题。临时模式不生成长期账号包；一旦请求 Cheat 能力，要求选择现有 Cheat 项目或升级到长期账号。不得模拟 Cheat 输出。
 
+### 资讯贴图轻量项目
+
+当 `content_kind=news-card` 时，不调用 `article_state.py init`，不进入 long-essay
+的 12 阶段状态、正式 v1 预测或 rubric 变更流程。只在 canonical 工作区建立独立
+贴图目录，并保留以下五类产物：
+
+- `card-brief.md`：发生了什么、为什么值得关注、账号一句判断、消息日期、可核查来源；
+- `research/sources.json`：每个外部事实的直接来源和 `supported_claim`；
+- `card-outline.md`：逐卡信息任务、文字上限、事实锚点和来源标记；
+- `cards/`：最终图片；
+- `publish.json` 与 `metrics.json`：独立记录发布以及阅读、点赞、分享、评论、收藏。
+
+调用 `wechat-content-strategy` 的 `news-card` 分支生成 `card-outline.md`。资讯贴图
+数据不得写入 long-essay v1 校准池，不得据此修改正式 rubric；2026-08-01 至
+2026-08-31 试运行期不得把资讯贴图交给 `wechat-style-learning`。
+
 ### 单篇项目
 
 运行 `python scripts/article_state.py init <文章目录> --article-id <ID> --mode <full|fast|temporary>` 创建文章目录。字段、路径和真实来源遵循：
@@ -126,17 +161,25 @@ python scripts/validate_project.py profile <账号目录>
 
 ## 第四步：执行文章流水线
 
+文章绑定标准长期账号画像时，在进入大纲和初稿前解析画像并读取 `voice.md` 与
+`content-patterns.md`。将 `voice.md` 和 `style-learning:validated` 区块作为硬约束，
+将 `style-learning:provisional` 区块作为软参考。优先级依次为：用户当次明确要求与
+已核验事实/证据/经历/观点、账号文风与已验证规则、当篇策略参数、待验证规则、
+`khazix-writer` 默认口吻。不得为套用文风新增素材。
+
+下表只适用于 `content_kind=long-essay`；资讯贴图使用上面的轻量项目，不进入本表。
+
 | 阶段 | 动作 | 产物或真实来源 |
 |---|---|---|
 | 简报 | 明确主题、受众、观点、材料、字数和时效 | `brief.md` |
 | 选题 | `creator-buddy` 跨平台信号 + 显式公众号爆款分支 + AI 主题的 `aihot` -> 候选归一化、去重、保留来源 -> 根 Cheat 评分与决策 -> 用户确认角度 | `topic-brief.md` + Cheat 引用 |
 | 调研 | 核查当前事实和原始来源 | `research/evidence.md`、`research/sources.json` |
 | 大纲 | 调用 `wechat-content-strategy`，从已核验材料选择一种内容增强策略，确定中心论点、文章级写作参数、结构、证据位置和编辑锚点 | `outline.md` |
-| 初稿 | 使用 `khazix-writer` 作为唯一主笔，按大纲中的文章级参数、卡兹克口吻和节奏生成初稿 | `drafts/draft-v1.md` |
+| 初稿 | 使用 `khazix-writer` 作为唯一起草引擎，按账号文风、已验证规则和大纲参数生成初稿；不得让其默认口吻覆盖账号规则 | `drafts/draft-v1.md` |
 | 审校 | 事实核查、结构、账号适配、`humanizer-zh` 去 AI 痕迹 | `drafts/final.md` |
 | 预测 | 最终稿确认后调用 Cheat | Cheat 预测引用 |
 | 视觉 | Guizang 生成唯一一张 `21:9` 微信头图；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
-| 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、预览页 |
+| 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、`output/article-preview.html`、`output/article-copy.html`、`output/article-copy-preview.html`、`output/html-qc.md` |
 | 发布 | 人工复制已验证 HTML；公开后由用户确认并登记 Cheat | `publish.json` |
 | 复盘 | 公开发布后调用 Cheat 回收和演化 | Cheat 复盘引用 |
 
@@ -148,11 +191,12 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 1. 根 `creator-buddy` 收集跨平台信号，并在公众号选题中显式路由 `gzh-explosive-content-detector`；小红书关键词热度优先走 `xiaohongshu-search`，只有详情、评论或博主作品分析才走 Agent Reach 路线。
 2. AI 账号或 AI 主题同时调用根 `aihot`，保留原文 URL；它的摘要只用于发现候选，不能替代事实核查。
-3. 把三路结果归一化为候选池。每条至少记录标题、来源、可打分的内容快照、抓取时间和可用的原始链接；同一事件跨平台重复出现时合并为一个候选，并保留全部来源，不把重复转述当成多份独立证据。
-4. 将候选池交给根 `cheat-on-content`：已有候选池走 recommend，已有主题或初稿走 score，没有主题且没有可用候选才走 seed。不得由信号 Skill 或本 Skill 自行替代 Cheat 排名。
-5. 在 `topic-brief.md` 展示数据源状态、归一化候选、去重说明、Cheat 评分引用与推荐理由；用户确认选题角度前，topic 阶段保持 `awaiting_confirmation`。
+3. 调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号启用的热点适配器补充综合热榜信号；它负责补充、去重和粗筛，不替代前三路。
+4. 把四路结果归一化为候选池。每条至少记录标题、来源、可打分的内容快照、抓取时间和可用的原始链接；同一事件跨平台重复出现时合并为一个候选，并保留全部来源，不把重复转述当成多份独立证据。
+5. 将候选池交给根 `cheat-on-content`：已有候选池走 recommend，已有主题或初稿走 score，没有主题且没有可用候选才走 seed。不得由信号 Skill 或本 Skill 自行替代 Cheat 排名。
+6. 在 `topic-brief.md` 展示数据源状态、归一化候选、去重说明、Cheat 评分引用与推荐理由；用户确认选题角度前，topic 阶段保持 `awaiting_confirmation`。
 
-`gzh-explosive-content-detector` 识别到泛词时，必须遵守它的强制等待规则：先让用户选择拓展或不拓展，再继续抓取、汇聚和 Cheat 决策。任一信号源不可用时如实标记该路缺失，不得用模型记忆补造，也不得把不完整候选池描述为完整三路扫描。
+`gzh-explosive-content-detector` 识别到泛词时，必须遵守它的强制等待规则：先让用户选择拓展或不拓展，再继续抓取、汇聚和 Cheat 决策。任一信号源不可用时如实标记该路缺失，不得用模型记忆补造，也不得把不完整候选池描述为完整四路扫描。
 
 ### 内容策略与改稿学习路由
 
@@ -181,7 +225,20 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 `gzh-design` 是 HTML 完成的必经路线。还要运行文章验证器。HTML 预览必须分别在 <=390 CSS px 和 >=900 CSS px 两种视口检查。还要把正文实际粘贴到干净的 `contenteditable` 或微信兼容沙箱检查 DOM。四项都通过后才可标记 HTML 完成。
 
-`gzh-design` 生成预览页后，运行 `python scripts/upgrade_preview_copy.py <output/article-preview.html>`，把复制按钮加固为显式 `text/html` 剪贴板写入并保留旧式复制作为回退。随后必须实际点击该按钮再粘贴检查；只检查干净 HTML 文件不能替代剪贴板门禁。
+HTML 阶段必须同时保留：
+
+1. `output/article.html`
+2. `output/article-preview.html`
+3. `output/article-copy.html`
+4. `output/article-copy-preview.html`
+5. `output/html-qc.md`
+
+其中 `article-copy.html` 是人工粘贴交付物，`artifacts.html.path` 必须指向它。
+`gzh-design` 生成预览页后，运行
+`python scripts/upgrade_preview_copy.py <output/article-copy-preview.html>`，把复制按钮
+加固为显式 `text/html` 剪贴板写入并保留旧式复制作为回退。随后必须实际点击该按钮
+再粘贴检查；只检查干净 HTML 文件不能替代剪贴板门禁。把窄/宽视口、图片加载、
+复制方法、粘贴目标和 pasted DOM 结果写入 `output/html-qc.md`。
 
 ## 失败与恢复
 
@@ -191,6 +248,11 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 ## 发布边界与最终交付
 
-默认交付经过浏览器检查的 HTML 预览页、正文 HTML、最终 Markdown、唯一一张 `21:9` 微信头图、正文配图和图片资产清单，并将 `publish.json.status` 设为 `html_ready`。这只表示可由用户人工复制到公众号编辑器，不表示已上传草稿或公开发布。本 Skill 不调用任何草稿箱上传或自动发布适配器。
+默认交付经过浏览器检查的 HTML 五件套：`output/article.html`、
+`output/article-preview.html`、`output/article-copy.html`、
+`output/article-copy-preview.html`、`output/html-qc.md`，以及最终 Markdown、唯一
+一张 `21:9` 微信头图、正文配图和图片资产清单，并将 `publish.json.status` 设为
+`html_ready`。这只表示可由用户人工复制到公众号编辑器，不表示已上传草稿或公开
+发布。本 Skill 不调用任何草稿箱上传或自动发布适配器。
 
 只有用户明确确认文章公开可访问后，才记录 `publicly_published`，并必须真实调用 `cheat-on-content` 的 publish 路由。Cheat 登记失败时保留真实公开状态，但将文章 publish 阶段标为失败；恢复时只重试登记，不重复上传或发布。

@@ -16,6 +16,7 @@ STAGE_RULES = {
     "topic": {
         "required": [
             "cheat-on-content",
+            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
         ],
@@ -23,6 +24,7 @@ STAGE_RULES = {
     "topic-ai": {
         "required": [
             "cheat-on-content",
+            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
             "aihot",
