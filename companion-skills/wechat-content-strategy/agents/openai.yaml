@@ -1,0 +1,4 @@
+interface:
+  display_name: "微信内容策略"
+  short_description: "基于已核验证据生成公众号内容策略、大纲、参数与编辑锚点"
+  default_prompt: "Use $wechat-content-strategy to turn verified evidence into a WeChat article outline."

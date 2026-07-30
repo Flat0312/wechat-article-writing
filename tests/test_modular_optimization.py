@@ -11,7 +11,8 @@ from pathlib import Path
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
-STYLE_ROOT = SKILL_ROOT.parent / "wechat-style-learning"
+COMPANION_ROOT = SKILL_ROOT / "companion-skills"
+STYLE_ROOT = COMPANION_ROOT / "wechat-style-learning"
 sys.path.insert(0, str(SKILL_ROOT / "scripts"))
 
 import profile_adapter
@@ -32,6 +33,12 @@ edit_learning = _load_edit_learning()
 
 
 class ModularOptimizationTests(unittest.TestCase):
+    def test_first_party_companion_skills_are_bundled(self):
+        for name in ("wechat-content-strategy", "wechat-style-learning"):
+            root = COMPANION_ROOT / name
+            self.assertTrue((root / "SKILL.md").is_file())
+            self.assertTrue((root / "agents" / "openai.yaml").is_file())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)

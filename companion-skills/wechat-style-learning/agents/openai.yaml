@@ -1,0 +1,4 @@
+interface:
+  display_name: "微信文风学习"
+  short_description: "从已确认的人工改稿差异中提炼并沉淀未来公众号写作规则"
+  default_prompt: "Use $wechat-style-learning to learn confirmed style rules from my edits."

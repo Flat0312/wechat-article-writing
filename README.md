@@ -19,6 +19,21 @@
 git clone https://github.com/Flat0312/wechat-article-writing.git "$env:USERPROFILE\.codex\skills\wechat-article-writing"
 ```
 
+本仓库同时版本化两个第一方伴生 Skill。首次克隆后，在 Codex skills 目录创建同级
+目录联接，让运行时继续按独立 Skill 名称发现它们：
+
+```powershell
+$repo = "$env:USERPROFILE\.codex\skills\wechat-article-writing"
+New-Item -ItemType Junction `
+  -Path "$env:USERPROFILE\.codex\skills\wechat-content-strategy" `
+  -Target "$repo\companion-skills\wechat-content-strategy"
+New-Item -ItemType Junction `
+  -Path "$env:USERPROFILE\.codex\skills\wechat-style-learning" `
+  -Target "$repo\companion-skills\wechat-style-learning"
+```
+
+如果同名路径已存在，先确认它是否是旧副本；不要直接覆盖或删除。
+
 重新启动 Codex 后，可以这样调用：
 
 ```text
@@ -27,13 +42,14 @@ git clone https://github.com/Flat0312/wechat-article-writing.git "$env:USERPROFI
 
 ## 依赖
 
-本仓库只包含总控 Skill，不复制第三方 Skill。不同阶段会使用以下依赖：
+本仓库包含总控 Skill，以及 `wechat-content-strategy`、`wechat-style-learning`
+两个第一方伴生 Skill；不复制第三方 Skill。不同阶段会使用以下依赖：
 
 - `cheat-on-content`
 - `khazix-writer`
 - `humanizer-zh`
-- `wechat-content-strategy`
-- `wechat-style-learning`
+- `wechat-content-strategy`（本仓库第一方伴生 Skill）
+- `wechat-style-learning`（本仓库第一方伴生 Skill）
 - `creator-buddy`（含 `gzh-explosive-content-detector`）
 - `aihot`（AI 主题）
 - `guizang-social-card-skill`
@@ -69,6 +85,7 @@ python scripts/dependency_check.py --stage account
 ```text
 agents/       Codex 界面元数据
 assets/       账号与文章项目模板
+companion-skills/ 第一方内容策略与文风学习 Skill
 references/   状态、路由、质量门禁和发布契约
 references/execution.md 详细执行手册
 scripts/      依赖检查、状态管理与项目验证脚本

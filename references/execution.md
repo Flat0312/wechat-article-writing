@@ -64,8 +64,8 @@ python scripts/dependency_check.py --stage retro
 | `cheat-on-content` | `帮我安装 https://github.com/XBuilderLAB/cheat-on-content` |
 | `khazix-writer` | `帮我安装 https://github.com/KKKKhazix/khazix-skills`（只需 khazix-writer） |
 | `humanizer-zh` | `帮我安装 https://github.com/op7418/Humanizer-zh` |
-| `wechat-content-strategy` | 本 Skill 的同级内部模块；重新安装或修复当前 Skill 包 |
-| `wechat-style-learning` | 本 Skill 的同级内部模块；重新安装或修复当前 Skill 包 |
+| `wechat-content-strategy` | 源码位于本仓库 `companion-skills/wechat-content-strategy`；修复指向该目录的同级运行时联接 |
+| `wechat-style-learning` | 源码位于本仓库 `companion-skills/wechat-style-learning`；修复指向该目录的同级运行时联接 |
 | `creator-buddy` | `帮我安装 https://github.com/SpaceZephyr/creator-buddy` |
 | `gzh-explosive-content-detector` | `creator-buddy` 的必需公众号分支；重新安装或修复 `creator-buddy` |
 | `aihot` | 重新安装或修复本机 `aihot` Skill |
