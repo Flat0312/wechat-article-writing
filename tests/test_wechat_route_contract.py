@@ -26,13 +26,13 @@ class WeChatRouteContractTests(unittest.TestCase):
         self.assertIn('单独确认', self.skill)
         self.assertIn('separate user confirmation', self.onboarding)
 
-    def test_video_route_is_excluded_and_trends_is_fourth_lane(self):
+    def test_video_route_is_excluded_and_trends_is_fifth_lane(self):
         for route in ('cheat-shoot', 'cheat-trends'):
             self.assertIn(route, self.skill)
             self.assertIn(route, self.routing)
         self.assertIn('Intentionally excluded Cheat routes', self.routing)
-        self.assertIn('四路信号', self.skill)
-        self.assertIn('fourth topic-signal lane', self.routing)
+        self.assertIn('五路信号', self.skill)
+        self.assertIn('fifth topic-signal lane', self.routing)
 
     def test_blind_scorer_remains_internal(self):
         self.assertIn('cheat-score-blind', self.skill)

@@ -34,7 +34,7 @@ STAGE_RULES = {
     "strategy": {"required": ["wechat-content-strategy"]},
     "editing": {"required": ["humanizer-zh"]},
     "learning": {"required": ["wechat-style-learning"]},
-    "cover": {"required": ["guizang-social-card-skill"]},
+    "cover": {"any": [["guizang-social-card-skill", "imagegen"]]},
     "visual": {
         "any": [["ian-xiaohei-illustrations", "baoyu-article-illustrator"]],
         "optional": ["imagegen"],

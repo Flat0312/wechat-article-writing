@@ -10,10 +10,11 @@
 
 ## 21:9 微信头图
 
-仅由 `guizang-social-card-skill` 生成一张 `21:9` 微信头图，并遵守账号 `visual-style.md`。
+由 `guizang-social-card-skill` 合成一张 `21:9` 微信头图，并遵守账号 `visual-style.md`。照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时才允许 ImageGen 端到端生成（路由兜底）。兜底必须在下方"路由标注"中显式说明。
 
 - 信息任务：
 - 标题：
+- 路由标注（guizang / 素材兜底 / 路由兜底 + 理由）：
 - 构图与素材来源：
 - 输出路径与尺寸：
 - 验证结果：

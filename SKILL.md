@@ -10,16 +10,26 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 2. 先核查事实，再编辑文风；不得新增用户未提供的经历、数字、案例或立场。
 3. 导入账号先预览，默认只读；不得读取或复制认证目录、Cookie、密钥和缓存。
 4. 每个阶段更新 `article-state.json`。上游产物变化时先按恢复协议传播 `stale` 并持久化，再继续下游。
-5. 微信封面只生成一张 `21:9` 头图，并且只走 `guizang-social-card-skill`；不生成 `1:1` 分享卡。正文配图按单个认知锚点选择单一路线：隐喻、情绪、叙事转折和身份表达走 Ian；有序步骤、层级、对比、矩阵、时间线、精确标签和证据数值走 `baoyu-article-illustrator`。同一锚点不得默认双轨生成，除非用户明确要求 A/B。
+5. 微信封面只生成一张 `21:9` 头图，不生成 `1:1` 分享卡。封面合成与文字排版走 `guizang-social-card-skill`；照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时，才允许 ImageGen 端到端生成整张封面（路由兜底）。两种兜底都必须显式标注。正文配图按单个认知锚点选择单一路线：隐喻、情绪、叙事转折和身份表达走 Ian；有序步骤、层级、对比、矩阵、时间线、精确标签和证据数值走 `baoyu-article-illustrator`。同一锚点不得默认双轨生成，除非用户明确要求 A/B。
 6. 发布只采用人工复制已验证 HTML 的路线；不得调用 `wechat-publisher`、其他草稿箱上传适配器或自动发布接口。
 7. 未通过事实、视觉或 HTML 强制关卡时，不得声称完整交付。
 8. 第三方 Skill 是运行时依赖；不得把它们复制或 vendoring 到本 Skill。
 9. 选题与事实调研完成后，调用 `wechat-content-strategy` 完成内容增强和大纲；它不得自行补造证据或替代 Cheat 决策。
 10. 只有长期账号且用户明确要求学习改稿时，才调用 `wechat-style-learning`；候选规则经用户确认后才能持久化，并且只影响后续文章。
-11. 选题采用四路信号汇聚：`creator-buddy` 提供跨平台信号，并显式路由 `gzh-explosive-content-detector` 提供公众号爆款数据；若被分类为通用关键词，必须先取得用户确认的扩展选择后再继续。AI 账号或 AI 主题再调用 `aihot`；同时调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号已启用的热点适配器补充综合热榜。四路候选归一化、去重并保留来源后，必须交给根 `cheat-on-content` 评分和决策，再由用户确认选题角度。
+11. 中长文与资讯贴图的选题统一采用五路信号汇聚：`creator-buddy` 提供跨平台信号（小红书走 `xiaohongshu-skill`），并显式路由 `gzh-explosive-content-detector` 提供公众号爆款数据；若被分类为通用关键词，必须先取得用户确认的扩展选择后再继续。AI 账号或 AI 主题再调用 `aihot`；同时使用本机 `x-tweet-fetcher` 抓取 X 上的相关推文、长文与话题作为信号（详见规则 15）；最后调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号已启用的热点适配器补充综合热榜。五路候选归一化、去重并保留来源后，必须交给根 `cheat-on-content` 评分和决策，再由用户确认选题角度。
 12. Cheat 子路由按公众号场景裁剪：`cheat-shoot` 只服务视频拍摄登记，不调用；`cheat-trends` 只负责补充、去重和粗筛热点候选，不替代 `creator-buddy`、公众号爆款或 `aihot`，也不替代最终的 Cheat 推荐；`cheat-score-blind` 只能由 Cheat 的 score、predict 或 bump 流程内部调用。
 13. 文章绑定标准长期账号画像时，在大纲和初稿前读取 `voice.md` 与 `content-patterns.md`。将 `voice.md` 和已验证规则作为硬约束，将待验证规则作为软参考；事实、证据、用户明确提供的经历、观点和当篇要求高于任何文风规则，不得为套用文风新增素材。`khazix-writer` 继续作为唯一起草引擎，但账号文风与已验证规则优先于其默认口吻。
-14. `content_kind=news-card` 的资讯贴图走独立轻量分支，不进入 long-essay 的 12 阶段 `article-state.json`、正式 v1 预测或 rubric 变更流程；发布与数据单独记录，不得混入 long-essay v1 校准池，试运行期不得进入 `wechat-style-learning`。
+14. `content_kind=news-card` 的资讯贴图与 long-essay 同级：同样进入发布登记、盲预测与复盘闭环；但走独立轻量建档分支，不进入 long-essay 的 12 阶段 `article-state.json`，也不参与 long-essay v1 正式预测或 rubric 变更流程。发布与数据单独记录；校准使用独立的 news-card 池，不得与 long-essay v1 校准池混池，试运行期不得进入 `wechat-style-learning`。
+15. 资讯贴图素材抓取使用本机 `x-tweet-fetcher`（`C:\Users\33158\.codex\tools\x-tweet-fetcher`，虚拟环境 `\.venv\Scripts\xtf.exe`）：
+    - `--url <推文链接>`：抓单条推文（含推文内嵌长文全文），零依赖，无需登录。
+    - `--article <文章链接或ID>`：抓 X 长文，需要浏览器后端（Playwright/Camofox）；未登录时只能拿到标题与公开预览（`is_partial: true`）。
+    - `--user <用户名>` / `--search <关键词>`：抓时间线或搜索，需要自建 Nitter 实例（`XTF_NITTER`）。
+    抓取结果以 JSON/Markdown 存入 `news-cards/<slug>/research/x-raw/`，来源逐条登记进 `research/sources.json`。抓取内容只作素材与事实核查依据，不得直接作为发布正文；贴图仍须满足“发生了什么 / 为什么值得关注 / 账号一句判断”三要素并标注来源。
+16. 小红书一切数据（热点搜索、笔记详情、评论、长文抓取）一律使用本机 `xiaohongshu-skill`（`C:\Users\33158\.codex\skills\xiaohongshu-skill`，Playwright 驱动，二维码登录）：
+    - 搜索热点：`python -m scripts search "<关键词>" --sort-by=最多点赞 --note-type=图文 --limit=10`（在 skill 目录下执行）。
+    - 读取帖子详情与评论（含长文正文）：`python -m scripts feed <feed_id> <xsec_token> --load-comments`。
+    - 不使用红狐 key（REDFOX_API_KEY），也不把 RedFox/socialdatax/怪壳当作默认路线；这些外部 Key 未配置或余额不足时不得报错终止，直接改用本技能。
+    抓取结果以 JSON/Markdown 存入 `news-cards/<slug>/research/`，链接必须原样保留 `xsec_token`，来源逐条登记进 `research/sources.json`。
 
 ## 执行手册
 

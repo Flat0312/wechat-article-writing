@@ -36,6 +36,43 @@ Apply `khazix-writer` as the sole author voice to every draft: follow its voice,
 
 Editing anchors belong in the draft as explicit requests for real user judgment, experience, or emotion. Resolve or remove them before final approval; never fill them with invented material.
 
+### 微信长文排版契约
+
+在 `wechat-article-writing` 调用 `gzh-design` 时，将本节作为不可选的上位约束传入。
+本节高于所选主题的组件配方和默认智能处理；主题组件与本节冲突时，省略该组件或
+改用更简洁的兼容组件。
+
+在最终正文确认前完成以下文本级检查：
+
+1. 按自然阅读节奏拆段，目标是在不宽于 390 CSS px、正文 14 或 15 px 的视口中，
+   单段不超过五六行；超长段落按语义拆分。
+2. 不为凑版式插入生硬的手动换行。预判并减少分行后仅剩两三个字的孤立短行；
+   每段末行以约占正文可用宽度一半为目标。
+3. 需要高亮的重点内容先确定为完整句子。高亮范围必须包含整句及其句末标点，
+   禁止只高亮半句；普通关键词下划线不算重点句高亮，但不得使用局部半高亮背景。
+
+HTML 排版必须满足以下视觉级规则：
+
+1. 窄屏首屏呈现一个完整阅读单元，至少让读者读完一个完整的开头段落或引言；
+   不用色块、横线或装饰卡片切割首屏内容段。
+2. 正文一级章节标题（通常为 Markdown `##`）作为大标题，正文下级标题（通常为
+   `###` / `####`）作为小标题。大标题与小标题使用明显不同的字体颜色；
+   大标题全篇使用同一格式和醒目颜色，清楚标识新章节开始；小标题格式可按语义灵活，
+   但不得削弱层级区分。
+3. 浅色背景主题的正文统一使用 14 或 15 px 字号和 `#595757` 字色。已登记的深色
+   常驻主题可改用其组件库“正文色”变量，但必须全篇统一，并与主题背景保持至少
+   `4.5:1` 的对比度；不得为单篇文章临时另定正文色。标题、链接和语义高亮可使用
+   各自的层级颜色，但不得改变普通正文的统一基线。
+4. 行距与段间距保持舒适、疏密适度；不得让相邻行或段落显得拥挤，也不得用过量
+   留白破坏连续阅读。
+5. 默认移除装饰性横线和多余边框。小标题确需短竖线等语义标记时只保留必要的一种，
+   不让线条成为视觉焦点。
+
+在窄屏预览和实际粘贴后的 DOM 中逐项复核上述九项要求。重点检查真实换行后的孤立
+短行、段落末行宽度和五六行上限，而不是只检查 HTML 源码。若只能通过改动正文文字
+才能修复，按 `recovery-rules.md` 从 `final` 阶段失效并重新完成审批及下游流程；
+不得在已批准正文或已锁定预测之后静默改字。
+
 ## Prediction gate
 
 Only an approved final text enters Cheat prediction. The `final` approval MUST be bound to the current final artifact, and `approvals.final.artifact_sha256` MUST equal `artifacts.final.sha256`; otherwise obtain a new user confirmation before prediction. Invoke root `cheat-on-content` for the prediction; do not simulate or approximate it. Do not expose actual performance, retro, audience performance signals, or other prohibited material to the blind scoring route. Never overwrite an immutable prediction.
@@ -66,7 +103,7 @@ step and report the missing route; do not simulate it with an ad hoc model call.
 
 ## Visual gate
 
-The cover route produces exactly one static `21:9` WeChat main cover through root `guizang-social-card-skill`. Explicitly suppress its default `1:1` pair output, pair preview, carousel, and Live Photo. Validate exact aspect ratio, Chinese title readability, visual consistency, subject crop, source provenance, and file existence.
+The cover route produces exactly one static `21:9` WeChat main cover through root `guizang-social-card-skill`. Explicitly suppress its default `1:1` pair output, pair preview, carousel, and Live Photo. When suitable photo material is missing, ImageGen may generate the base photo while guizang still composes the typography (material fallback); only when guizang itself is unavailable may ImageGen produce the entire cover end to end under the same one-asset contract (route fallback). Every fallback must be explicitly flagged in `visual-plan.md` and the delivery notes. Validate exact aspect ratio, Chinese title readability, visual consistency, subject crop, source provenance, and file existence.
 
 Body illustrations remain enabled. Give each body image one independent information job and route each cognitive anchor to Ian or `baoyu-article-illustrator` according to `skill-routing.md`. Validate aspect ratio, Chinese text, readability, visual consistency, insertion position, source provenance, and file existence. Do not create decorative filler or generate both routes for the same anchor unless the user explicitly requests A/B.
 
@@ -81,7 +118,7 @@ Before selecting the Baoyu route, the final text MUST be recorded and approved a
 
 ## HTML gate
 
-Invoke root `gzh-design`. Use WeChat-compatible inline styles. Verify every image reference, image dimension, and required asset. Run the repository article validator and clear every mandatory validator error; also clear every mandatory `gzh-design` error.
+Invoke root `gzh-design` with the 微信长文排版契约 above as an explicit hard constraint. Use WeChat-compatible inline styles. Verify every image reference, image dimension, and required asset. Run the repository article validator and clear every mandatory validator error; also clear every mandatory `gzh-design` error.
 
 HTML completion requires all five non-empty files:
 
@@ -105,8 +142,8 @@ the preview was upgraded.
 
 Then click the upgraded preview copy button and paste the intended article body into a clean local `contenteditable` surface or a WeChat-compatible rich-text sandbox. Confirm that the button reports `clipboard-api`; if it reports `legacy-fallback`, record that downgrade and do not assume block hierarchy survived. Inspect the pasted clipboard HTML DOM, not only the preview: verify content hierarchy, required inline styles, link targets, image nodes and sources, content order, and the absence of preview-only controls or labels. If an already-authenticated WeChat editor is available, additionally validate the paste there; do not require a WeChat login or credentials as the default prerequisite. Report the copy method, the two checked widths, the paste target, and the result of each DOM and layout check before marking the stage complete.
 
-Write the two checked widths, image-loading results, copy method, paste target, and each DOM/layout
-result to `output/html-qc.md`. Do not mark HTML complete unless all five files exist,
+Write the two checked widths, image-loading results, copy method, paste target, each DOM/layout
+result, and all nine 微信长文排版契约 results to `output/html-qc.md`. Do not mark HTML complete unless all five files exist,
 `gzh-design`, deterministic validation, both browser preview checks, and the pasted-DOM inspection
 have all passed. Missing `gzh-design` blocks HTML completion; no generic formatter or hand-written
 HTML substitutes for this gate.

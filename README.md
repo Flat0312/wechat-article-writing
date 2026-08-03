@@ -1,23 +1,55 @@
 # WeChat Article Writing
 
-一个面向 Codex 的微信公众号长文总控 Skill。它把账号上下文、选题、事实核查、内容策略、写作、审校、配图、公众号 HTML 排版、发布登记和复盘组织为一条可验证的工作流。
+<p align="center">
+  <b>面向 Codex 的微信公众号长文 + 资讯贴图总控 Skill</b><br>
+  把账号上下文、选题、事实核查、内容策略、写作、审校、配图、公众号 HTML 排版、
+  发布登记与复盘，组织成一条可验证的工作流。
+</p>
 
-## 特点
+<p align="center">
+  <img alt="Skill" src="https://img.shields.io/badge/Skill-Codex-blueviolet?style=flat-square">
+  <img alt="License" src="https://img.shields.io/github/license/Flat0312/wechat-article-writing?style=flat-square">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square">
+</p>
 
-- 用 `article-state.json` 跟踪阶段、审批和失效传播。
-- 先核查事实，再进行写作和文风编辑。
-- 支持长期账号、已有账号导入和临时单篇创作。
-- 微信封面固定为单张 21:9 头图，正文配图按内容类型路由。
-- 交付经过验证、可手动粘贴到公众号编辑器的 HTML。
-- 发布登记与内容复盘通过 `cheat-on-content` 形成校准闭环。
+## 为什么用这个 Skill
+
+微信公众号创作不只是"写一篇文章"。它是一整条需要留痕的流水线：
+
+| 阶段 | 谁负责 | 产物 |
+|---|---|---|
+| 选题 | 五路信号汇聚 + Cheat 评分 | `candidates.md` |
+| 事实核查 | 来源登记 + 交叉验证 | `research/evidence.md` |
+| 策略与大纲 | `wechat-content-strategy` | `outline.md` |
+| 初稿 | `khazix-writer` + 账号文风 | `drafts/draft-v1.md` |
+| 审校 | 事实、结构、去 AI 痕迹 | `drafts/final.md` |
+| 预测 | Cheat 盲预测（immutable） | `predictions/` |
+| 视觉 | 21:9 头图 + Ian/Baoyu 配图 | `visuals/` |
+| 排版 | `gzh-design` + 九项排版契约 | `output/article.html` |
+| 发布 | 人工复制，公开后登记 | `publish.json` |
+| 复盘 | Cheat T+2 数据回收 | retro 段 |
+
+每一步都有明确的状态、审批和失效传播，绿测试不等于已交付——发布前的浏览器粘贴
+验证和发布后的数据复盘都不可省略。
+
+## 核心特点
+
+- **可验证**：用 `article-state.json` 跟踪阶段、审批和失效传播；审计命令一键检查。
+- **先事实后文风**：不新增用户未提供的经历、数字、案例或立场。
+- **五路选题信号**：公众号爆款 + 小红书（本机 Playwright）+ AI HOT + X/Twitter + 综合热榜。
+- **两种内容形态**：原创长文与 AI/科技资讯贴图，同级但独立校准。
+- **微信排版契约**：21:9 头图、窄屏断行、字号字色、九项排版检查全部可执行。
+- **发布边界清晰**：只走人工复制已验证 HTML，不碰草稿箱 API；公开后才允许登记与复盘。
 
 ## 安装
 
-将仓库克隆到 Codex skills 目录：
+### 1. 克隆到 Codex skills 目录
 
 ```powershell
 git clone https://github.com/Flat0312/wechat-article-writing.git "$env:USERPROFILE\.codex\skills\wechat-article-writing"
 ```
+
+### 2. 创建伴生 Skill 联接
 
 本仓库同时版本化两个第一方伴生 Skill。首次克隆后，在 Codex skills 目录创建同级
 目录联接，让运行时继续按独立 Skill 名称发现它们：
@@ -34,10 +66,13 @@ New-Item -ItemType Junction `
 
 如果同名路径已存在，先确认它是否是旧副本；不要直接覆盖或删除。
 
+### 3. 开始使用
+
 重新启动 Codex 后，可以这样调用：
 
 ```text
 使用 $wechat-article-writing 帮我写一篇公众号文章
+使用 $wechat-article-writing 做一组资讯贴图
 ```
 
 ## 依赖
@@ -45,19 +80,20 @@ New-Item -ItemType Junction `
 本仓库包含总控 Skill，以及 `wechat-content-strategy`、`wechat-style-learning`
 两个第一方伴生 Skill；不复制第三方 Skill。不同阶段会使用以下依赖：
 
-- `cheat-on-content`
-- `khazix-writer`
-- `humanizer-zh`
-- `wechat-content-strategy`（本仓库第一方伴生 Skill）
-- `wechat-style-learning`（本仓库第一方伴生 Skill）
-- `creator-buddy`（含 `gzh-explosive-content-detector`）
-- `aihot`（AI 主题）
-- `guizang-social-card-skill`
-- `ian-xiaohei-illustrations` 或 `baoyu-article-illustrator`
-- `gzh-design`
-- `imagegen`（可选；正文配图路线会自行解析可用图片后端）
+- `cheat-on-content` — 评分、预测、发布登记、复盘、rubric
+- `khazix-writer` — 唯一起草引擎
+- `humanizer-zh` — 去 AI 痕迹
+- `creator-buddy`（含 `gzh-explosive-content-detector`）— 跨平台与公众号爆款信号
+- `xiaohongshu-skill` — 小红书热点（本机 Playwright，免费）
+- `x-tweet-fetcher` — X/Twitter 推文与长文信号
+- `aihot` — AI 主题信号
+- `guizang-social-card-skill` — 21:9 头图合成
+- `ian-xiaohei-illustrations` / `baoyu-article-illustrator` — 正文配图
+- `gzh-design` — 公众号 HTML 排版
+- `imagegen`（可选）— 封面照片素材兜底或路由兜底
 
-完整的阶段依赖和安装提示见 [references/execution.md](references/execution.md)。系统还需要 Git 和 Python 3。
+完整的阶段依赖和安装提示见 [references/execution.md](references/execution.md)。
+系统还需要 Git 和 Python 3。
 
 ## 验证
 
@@ -67,11 +103,6 @@ python scripts/dependency_check.py --stage account
 ```
 
 依赖检查反映本机安装状态；未安装可选或阶段依赖时，检查会明确列出缺失项。
-
-- `python scripts/upgrade_preview_copy.py <output/article-preview.html>` 现在接受稳定但实现略有差异的 `gzhCopy` 预览复制函数；若已加固，它会幂等跳过。
-- `python scripts/validate_project.py article <文章目录>` 的 `stage_status` 校验错误现在会明确指出具体状态键，例如 `stage_status.brief=soon is invalid`。
-- 正文视觉预检把 Ian/Baoyu 作为二选一轨道，并把 `imagegen` 仅作为可选提示；不会因缺少备用轨道或独立 `imagegen` Skill 而误阻断。
-- 正文配图改按单个认知锚点选择单一路线，明确把 Ian 用于隐喻/情绪/叙事转折，把 `baoyu-article-illustrator` 用于结构/层级/证据数据。
 
 ## 安全与发布边界
 
@@ -83,14 +114,13 @@ python scripts/dependency_check.py --stage account
 ## 项目结构
 
 ```text
-agents/       Codex 界面元数据
-assets/       账号与文章项目模板
-companion-skills/ 第一方内容策略与文风学习 Skill
-references/   状态、路由、质量门禁和发布契约
-references/execution.md 详细执行手册
-scripts/      依赖检查、状态管理与项目验证脚本
-tests/        回归测试
-SKILL.md      Skill 主入口
+agents/            Codex 界面元数据
+assets/            账号与文章项目模板
+companion-skills/  第一方内容策略与文风学习 Skill
+references/        状态、路由、质量门禁和发布契约
+scripts/           依赖检查、状态管理与项目验证脚本
+tests/             回归测试
+SKILL.md           Skill 主入口
 ```
 
 ## License

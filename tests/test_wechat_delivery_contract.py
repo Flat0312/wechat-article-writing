@@ -23,6 +23,29 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         self.assertNotIn('draft_uploaded', publishing)
         self.assertNotIn('upload_failed', publishing)
 
+    def test_wechat_layout_contract_is_complete_and_overrides_theme_defaults(self):
+        quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
+        execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
+
+        for required_rule in (
+            '窄屏首屏呈现一个完整阅读单元',
+            '大标题与小标题使用明显不同的字体颜色',
+            '行距与段间距保持舒适、疏密适度',
+            '大标题全篇使用同一格式和醒目颜色',
+            '默认移除装饰性横线和多余边框',
+            '分行后仅剩两三个字的孤立短行',
+            '禁止只高亮半句',
+            '单段不超过五六行',
+            '14 或 15 px 字号和 `#595757` 字色',
+        ):
+            self.assertIn(required_rule, quality)
+
+        self.assertIn('本节高于所选主题的组件配方和默认智能处理', quality)
+        self.assertIn('已登记的深色', quality)
+        self.assertIn('`4.5:1` 的对比度', quality)
+        self.assertIn('不得为单篇文章临时另定正文色', quality)
+        self.assertIn('把九项排版检查', execution)
+
     def test_publish_dependency_no_longer_discovers_draft_adapter(self):
         import dependency_check
 

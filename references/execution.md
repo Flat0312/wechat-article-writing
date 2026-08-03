@@ -68,6 +68,7 @@ python scripts/dependency_check.py --stage retro
 | `wechat-style-learning` | 源码位于本仓库 `companion-skills/wechat-style-learning`；修复指向该目录的同级运行时联接 |
 | `creator-buddy` | `帮我安装 https://github.com/SpaceZephyr/creator-buddy` |
 | `gzh-explosive-content-detector` | `creator-buddy` 的必需公众号分支；重新安装或修复 `creator-buddy` |
+| `xiaohongshu-skill` | `帮我安装 https://github.com/DeliciousBuding/xiaohongshu-skill`；首次使用需扫码登录（`python -m scripts qrcode --headless=false`） |
 | `aihot` | 重新安装或修复本机 `aihot` Skill |
 | `guizang-social-card-skill` | `帮我安装 https://github.com/op7418/guizang-social-card-skill` |
 | `ian-xiaohei-illustrations` | `帮我安装 https://github.com/helloianneo/ian-xiaohei-illustrations` |
@@ -178,7 +179,7 @@ python scripts/validate_project.py profile <账号目录>
 | 初稿 | 使用 `khazix-writer` 作为唯一起草引擎，按账号文风、已验证规则和大纲参数生成初稿；不得让其默认口吻覆盖账号规则 | `drafts/draft-v1.md` |
 | 审校 | 事实核查、结构、账号适配、`humanizer-zh` 去 AI 痕迹 | `drafts/final.md` |
 | 预测 | 最终稿确认后调用 Cheat | Cheat 预测引用 |
-| 视觉 | Guizang 生成唯一一张 `21:9` 微信头图；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
+| 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
 | 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、`output/article-preview.html`、`output/article-copy.html`、`output/article-copy-preview.html`、`output/html-qc.md` |
 | 发布 | 人工复制已验证 HTML；公开后由用户确认并登记 Cheat | `publish.json` |
 | 复盘 | 公开发布后调用 Cheat 回收和演化 | Cheat 复盘引用 |
@@ -189,7 +190,7 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 进入选题阶段时先运行 `dependency_check.py --stage topic`；AI 账号或 AI 主题改用 `--stage topic-ai`。随后严格按 `references/skill-routing.md` 的 topic signal orchestration 执行：
 
-1. 根 `creator-buddy` 收集跨平台信号，并在公众号选题中显式路由 `gzh-explosive-content-detector`；小红书关键词热度优先走 `xiaohongshu-search`，只有详情、评论或博主作品分析才走 Agent Reach 路线。
+1. 根 `creator-buddy` 收集跨平台信号，并在公众号选题中显式路由 `gzh-explosive-content-detector`；小红书关键词热度优先走本机 `xiaohongshu-skill`（Playwright 扫码登录、免费、无需 API Key），只有详情、评论或博主作品分析才走 Agent Reach 路线。
 2. AI 账号或 AI 主题同时调用根 `aihot`，保留原文 URL；它的摘要只用于发现候选，不能替代事实核查。
 3. 调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号启用的热点适配器补充综合热榜信号；它负责补充、去重和粗筛，不替代前三路。
 4. 把四路结果归一化为候选池。每条至少记录标题、来源、可打分的内容快照、抓取时间和可用的原始链接；同一事件跨平台重复出现时合并为一个候选，并保留全部来源，不把重复转述当成多份独立证据。
@@ -217,13 +218,17 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 ## 视觉与 HTML
 
-在 `visuals/visual-plan.md` 分开记录封面与正文配图计划。封面调用根 `guizang-social-card-skill`，显式覆盖其默认封面对输出：只生成 `.poster.wide` 对应的 `21:9` 主头图，不创建 `.poster.square`、`1:1` 分享卡或封面对预览。生成后验证尺寸、标题可读性、主体裁切、素材来源和文件存在性。
+在 `visuals/visual-plan.md` 分开记录封面与正文配图计划。封面调用根 `guizang-social-card-skill`，显式覆盖其默认封面对输出：只生成 `.poster.wide` 对应的 `21:9` 主头图，不创建 `.poster.square`、`1:1` 分享卡或封面对预览。照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时，才允许 ImageGen 端到端生成整张封面（路由兜底）。两种兜底适用同一单图契约，并必须在 `visual-plan.md` 和交付说明中显式标注。生成后验证尺寸、标题可读性、主体裁切、素材来源和文件存在性。
 
 正文每个认知锚点只选一条轨道：情绪、观点、身份、叙事转折或原创隐喻走 Ian；流程、层级、对比、矩阵、架构、时间线、精确标签或有证据的数据走 `baoyu-article-illustrator`。无独立信息任务的段落不配图。同一锚点除非用户明确要求 A/B，不重复生成两套。
 
 选择 Baoyu 轨道时，先运行 `python scripts/baoyu_adapter.py prepare <文章目录>`，只把 `visuals/assets/baoyu/source.md` 交给根 Skill；结束后运行 `python scripts/baoyu_adapter.py verify <文章目录>`，确保已批准的 `drafts/final.md` 没有被改写。
 
-`gzh-design` 是 HTML 完成的必经路线。还要运行文章验证器。HTML 预览必须分别在 <=390 CSS px 和 >=900 CSS px 两种视口检查。还要把正文实际粘贴到干净的 `contenteditable` 或微信兼容沙箱检查 DOM。四项都通过后才可标记 HTML 完成。
+`gzh-design` 是 HTML 完成的必经路线。调用时必须把 `references/quality-gates.md`
+中的“微信长文排版契约”作为高于主题配方和默认智能处理的硬约束传入。还要运行文章
+验证器。HTML 预览必须分别在 <=390 CSS px 和 >=900 CSS px 两种视口检查。还要把
+正文实际粘贴到干净的 `contenteditable` 或微信兼容沙箱检查 DOM，并把九项排版检查
+结果逐项写入 `output/html-qc.md`。全部通过后才可标记 HTML 完成。
 
 HTML 阶段必须同时保留：
 
