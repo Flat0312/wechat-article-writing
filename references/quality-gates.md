@@ -55,6 +55,13 @@ Editing anchors belong in the draft as explicit requests for real user judgment,
 
 Only an approved final text enters Cheat prediction. The `final` approval MUST be bound to the current final artifact, and `approvals.final.artifact_sha256` MUST equal `artifacts.final.sha256`; otherwise obtain a new user confirmation before prediction. Invoke root `cheat-on-content` for the prediction; do not simulate or approximate it. Do not expose actual performance, retro, audience performance signals, or other prohibited material to the blind scoring route. Never overwrite an immutable prediction.
 
+For the long-essay path, create the Cheat-compatible script through
+[`references/cheat-prediction-bridge.md`](cheat-prediction-bridge.md). The
+adapter is the only supported copy from `drafts/final.md` into Cheat's
+`scripts/` input namespace; a missing or mismatched approval hash must fail
+before any snapshot is written. `prediction-input-reference.json` is only an
+input receipt and never substitutes for the real `cheat-predict` call.
+
 Before any formal prediction, shadow prediction, or public release, lock exactly one
 `primary_action`: `approval`, `forwarding`, `saving`, or `discussion`. The
 `prediction-reference.json` receipt MUST record `primary_action`, `locked_at`, and the current

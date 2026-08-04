@@ -183,7 +183,7 @@ python scripts/validate_project.py profile <账号目录>
 | 初稿 | 由本 Skill 按文风执行卡融合用户声音与兼容技法，生成初稿；不得让卡兹克默认人格覆盖账号规则 | `drafts/draft-v1.md` |
 | 审校 | 事实核查、结构、账号适配、文笔终检；`humanizer-zh` 只作可选 AI 痕迹诊断 | `drafts/final.md` |
 | 终稿观察 | 持续学习启用时，终稿批准并锁定 SHA256 后提炼 0–5 条跨篇候选，写入观察账本；不改变正文、审批或预测 | `account-profile/history/voice-observations/` |
-| 预测 | 最终稿确认后调用 Cheat | Cheat 预测引用 |
+| 预测 | 先运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，再调用根 Cheat 的 predict | `prediction-input-reference.json` + Cheat 预测引用 |
 | 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
 | 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、`output/article-preview.html`、`output/article-copy.html`、`output/article-copy-preview.html`、`output/html-qc.md` |
 | 发布 | 人工复制已验证 HTML；公开后由用户确认并登记 Cheat | `publish.json` |

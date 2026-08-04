@@ -58,6 +58,15 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         self.assertTrue(result['ok'])
         self.assertEqual(result['missing_required'], [])
 
+    def test_long_essay_prediction_bridge_is_declared(self):
+        bridge = (SKILL_ROOT / 'references' / 'cheat-prediction-bridge.md').read_text(encoding='utf-8')
+        quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
+        execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
+        self.assertIn('prediction-input-reference.json', bridge)
+        self.assertIn('cheat_prediction_adapter.py', bridge)
+        self.assertIn('input receipt', quality)
+        self.assertIn('哈希绑定的只读 Cheat 输入', execution)
+
     def test_body_illustration_preflight_accepts_either_complete_route(self):
         import dependency_check
 
