@@ -24,6 +24,7 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         self.assertNotIn('upload_failed', publishing)
 
     def test_wechat_layout_contract_is_complete_and_overrides_theme_defaults(self):
+        contract = (SKILL_ROOT / 'references' / 'wechat-layout-contract.md').read_text(encoding='utf-8')
         quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
         execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
 
@@ -38,13 +39,17 @@ class WeChatDeliveryContractTests(unittest.TestCase):
             '单段不超过五六行',
             '14 或 15 px 字号和 `#595757` 字色',
         ):
-            self.assertIn(required_rule, quality)
+            self.assertIn(required_rule, contract)
 
-        self.assertIn('本节高于所选主题的组件配方和默认智能处理', quality)
-        self.assertIn('已登记的深色', quality)
-        self.assertIn('`4.5:1` 的对比度', quality)
-        self.assertIn('不得为单篇文章临时另定正文色', quality)
-        self.assertIn('把九项排版检查', execution)
+        self.assertIn('本契约高于所选主题的组件配方', contract)
+        self.assertIn('已登记的深色', contract)
+        self.assertIn('`4.5:1` 的对比度', contract)
+        self.assertIn('不得为单篇文章临时另定正文色', contract)
+        # quality-gates.md 仍要在调用 gzh-design 时把契约作为上位约束传入
+        self.assertIn('不可选的上位约束', quality)
+        self.assertIn('references/wechat-layout-contract.md', quality)
+        # execution.md 仍要记录"9 项排版检查"到 html-qc
+        self.assertIn('九项排版检查', execution)
 
     def test_publish_dependency_no_longer_discovers_draft_adapter(self):
         import dependency_check

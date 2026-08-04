@@ -21,7 +21,7 @@
 | 选题 | 五路信号汇聚 + Cheat 评分 | `candidates.md` |
 | 事实核查 | 来源登记 + 交叉验证 | `research/evidence.md` |
 | 策略与大纲 | `wechat-content-strategy` | `outline.md` |
-| 初稿 | `khazix-writer` + 账号文风 | `drafts/draft-v1.md` |
+| 初稿 | 账号文风执行卡 + `khazix-writer` 技法辅助 + 融合审校 | `drafts/draft-v1.md` |
 | 审校 | 事实、结构、去 AI 痕迹 | `drafts/final.md` |
 | 预测 | Cheat 盲预测（immutable） | `predictions/` |
 | 视觉 | 21:9 头图 + Ian/Baoyu 配图 | `visuals/` |
@@ -36,6 +36,7 @@
 
 - **可验证**：用 `article-state.json` 跟踪阶段、审批和失效传播；审计命令一键检查。
 - **先事实后文风**：不新增用户未提供的经历、数字、案例或立场。
+- **文风可进化**：账号声音由 `voice.md` 主导，卡兹克提供受边界约束的技法辅助；启用持续学习后，每篇批准终稿都会进入软观察层。
 - **五路选题信号**：公众号爆款 + 小红书（本机 Playwright）+ AI HOT + X/Twitter + 综合热榜。
 - **两种内容形态**：原创长文与 AI/科技资讯贴图，同级但独立校准。
 - **微信排版契约**：21:9 头图、窄屏断行、字号字色、九项排版检查全部可执行。
@@ -81,8 +82,8 @@ New-Item -ItemType Junction `
 两个第一方伴生 Skill；不复制第三方 Skill。不同阶段会使用以下依赖：
 
 - `cheat-on-content` — 评分、预测、发布登记、复盘、rubric
-- `khazix-writer` — 唯一起草引擎
-- `humanizer-zh` — 去 AI 痕迹
+- `khazix-writer` — 必需的技法辅助，不代替账号作者声音
+- `humanizer-zh` — 可选的 AI 痕迹诊断器；最终改写受账号文风门禁约束
 - `creator-buddy`（含 `gzh-explosive-content-detector`）— 跨平台与公众号爆款信号
 - `xiaohongshu-skill` — 小红书热点（本机 Playwright，免费）
 - `x-tweet-fetcher` — X/Twitter 推文与长文信号

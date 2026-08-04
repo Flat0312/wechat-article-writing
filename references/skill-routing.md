@@ -11,9 +11,10 @@
 | `gzh-explosive-content-detector` | Recent WeChat viral samples, growth signals, headline patterns, niche terms | Mandatory WeChat branch for topic discovery; invoke through `creator-buddy` and preserve its generic-keyword confirmation rule |
 | `aihot` | Current AI news | Invoke for AI accounts or AI topics |
 | `x-tweet-fetcher` | X/Twitter tweets, threads, long-form articles, and timeline signals via local CLI (no API key) | Mandatory X lane for topic discovery on both long essays and news cards |
-| `khazix-writer` | Drafting engine | Mandatory for every article draft; account `voice.md` and validated profile rules override its default stylistic habits |
-| `humanizer-zh` | AI-pattern editorial pass | Mandatory after draft and before final; remove AI traces after facts and structure stabilize |
-| `wechat-content-strategy` | Evidence-bound content enhancement, outline, writing parameters, editing anchors | Mandatory after topic/evidence and before Khazix drafting |
+| `wechat-article-writing` | First-party drafting, account voice, prose execution and final style gate | Mandatory owner of article drafting; read `references/writing-style.md` |
+| `khazix-writer` | Required craft assistant | Must participate after the style card is locked; never the author voice and never import persona, signature, quota or fixed mannerism |
+| `humanizer-zh` | Optional AI-pattern diagnostic | Run only after facts, structure and account voice stabilize; accept suggestions selectively and never replace the whole draft |
+| `wechat-content-strategy` | Evidence-bound content enhancement, outline, writing parameters, style card and editing anchors | Mandatory after topic/evidence and before first-party drafting |
 | `wechat-style-learning` | Confirmed edit learning for long-term profiles | Invoke only on an explicit learn-from-edits request and persist only after confirmation |
 | `guizang-social-card-skill` | One 21:9 WeChat main cover | Preferred cover route; explicitly suppress its default 1:1 pair output; ImageGen fallback allowed under cover routing rules |
 | `ian-xiaohei-illustrations` | Metaphor, emotion, identity, cognitive turns | Body illustration rail A |
@@ -67,8 +68,8 @@ Every init, seed, recommend, score, predict, publish, retro, persona, bump, lear
 ## Content strategy and learning
 
 - Keep `wechat-article-writing` as the ordinary entrypoint and owner of preconditions, state, approvals, and recovery.
-- Invoke `wechat-content-strategy` only after the selected topic and evidence package exist. It may write `outline.md`; it may not collect untracked facts, draft the article, or change article state directly.
-- Keep `khazix-writer` as the sole drafting engine. Account `voice.md` and validated profile rules override its default stylistic habits; article-level parameters from the strategy module refine execution and never select an alternate drafting engine.
+- Invoke `wechat-content-strategy` only after the selected topic and evidence package exist. It may write `outline.md` and the article's style card; it may not collect untracked facts, draft the article, or change article state directly.
+- Keep `wechat-article-writing` as the drafting owner. Read `references/writing-style.md` before writing, lock the style card, then call `khazix-writer` for bounded craft assistance. Account `voice.md` and validated profile rules define the author voice; article-level parameters refine execution. The assistant must never introduce its own identity, slogans, coarse language, fixed punctuation, fixed word count or fixed ending.
 - Invoke `wechat-style-learning` only for a standard long-term profile after the user explicitly requests learning. It may update the optional edit ledger and generated learning blocks in `content-patterns.md`; it may not change `voice.md`, article artifacts, Cheat state, or current approvals.
 
 ## WeChat cover routing

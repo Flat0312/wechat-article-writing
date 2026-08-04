@@ -32,46 +32,24 @@ fields: 真实摩擦、它揭示的机制、读者处境、一句核心判断、
 If any field is missing, return the gaps to the orchestrator and do not approve the outline or
 begin drafting.
 
-Apply `khazix-writer` as the sole author voice to every draft: follow its voice, rhythm, taboo-word list, four-layer self-check, and the article-level parameters in `outline.md`. Parameters may control opening shape, evidence presentation, paragraph cadence, emotional intensity, and closing form; they may not replace the account voice or introduce a separate persona. Preserve the user's confirmed position boundaries. Invoke `humanizer-zh` only after facts and structure stabilize. It may edit wording and rhythm but may not add facts, numbers, experiences, or positions.
+Read `references/writing-style.md` before drafting. `wechat-article-writing` owns the draft, and the account `voice.md` plus validated profile rules define the author voice. Require a complete style card in `outline.md`; it must select the relevant stable rules, article-specific prose goals, optional provisional experiment, optional final-observation candidate, forbidden habits, preserved user expressions, opening action and closing return. Do not start drafting while the card is missing or generic.
+
+External writing Skills are never the author identity. After the style card is locked, call `khazix-writer` as a required bounded craft assistant for structure, scene, analogy, rhythm and self-check suggestions; do not import its persona, slogans, coarse language, punctuation bans, fixed word count, fixed structure, signature or fixed ending. The total draft must be rewritten and integrated by the account voice. Preserve the user's confirmed position boundaries and do not use quotas for colloquial phrases, fragments, rhetorical questions or quotable lines.
+
+After facts and structure stabilize, run the prose, account-voice, AI-pattern and voice-regression passes from `references/writing-style.md`. `humanizer-zh` is optional diagnostic input only: obtain a problem list, apply the smallest compatible edits, and reject any whole-draft rewrite or suggestion that adds facts, numbers, experiences, positions or synthetic personality. Final approval requires all seven prose checks in that reference to pass.
 
 Editing anchors belong in the draft as explicit requests for real user judgment, experience, or emotion. Resolve or remove them before final approval; never fill them with invented material.
 
 ### 微信长文排版契约
 
-在 `wechat-article-writing` 调用 `gzh-design` 时，将本节作为不可选的上位约束传入。
-本节高于所选主题的组件配方和默认智能处理；主题组件与本节冲突时，省略该组件或
-改用更简洁的兼容组件。
+排版契约的 8 条规则（3 文本级 + 5 视觉级）已抽到独立文档
+[`references/wechat-layout-contract.md`](wechat-layout-contract.md)。在
+`wechat-article-writing` 调用 `gzh-design` 时，将本节作为不可选的上位约束传入；
+主题组件与契约冲突时省略该组件或改用更简洁的兼容组件。
 
-在最终正文确认前完成以下文本级检查：
-
-1. 按自然阅读节奏拆段，目标是在不宽于 390 CSS px、正文 14 或 15 px 的视口中，
-   单段不超过五六行；超长段落按语义拆分。
-2. 不为凑版式插入生硬的手动换行。预判并减少分行后仅剩两三个字的孤立短行；
-   每段末行以约占正文可用宽度一半为目标。
-3. 需要高亮的重点内容先确定为完整句子。高亮范围必须包含整句及其句末标点，
-   禁止只高亮半句；普通关键词下划线不算重点句高亮，但不得使用局部半高亮背景。
-
-HTML 排版必须满足以下视觉级规则：
-
-1. 窄屏首屏呈现一个完整阅读单元，至少让读者读完一个完整的开头段落或引言；
-   不用色块、横线或装饰卡片切割首屏内容段。
-2. 正文一级章节标题（通常为 Markdown `##`）作为大标题，正文下级标题（通常为
-   `###` / `####`）作为小标题。大标题与小标题使用明显不同的字体颜色；
-   大标题全篇使用同一格式和醒目颜色，清楚标识新章节开始；小标题格式可按语义灵活，
-   但不得削弱层级区分。
-3. 浅色背景主题的正文统一使用 14 或 15 px 字号和 `#595757` 字色。已登记的深色
-   常驻主题可改用其组件库“正文色”变量，但必须全篇统一，并与主题背景保持至少
-   `4.5:1` 的对比度；不得为单篇文章临时另定正文色。标题、链接和语义高亮可使用
-   各自的层级颜色，但不得改变普通正文的统一基线。
-4. 行距与段间距保持舒适、疏密适度；不得让相邻行或段落显得拥挤，也不得用过量
-   留白破坏连续阅读。
-5. 默认移除装饰性横线和多余边框。小标题确需短竖线等语义标记时只保留必要的一种，
-   不让线条成为视觉焦点。
-
-在窄屏预览和实际粘贴后的 DOM 中逐项复核上述九项要求。重点检查真实换行后的孤立
-短行、段落末行宽度和五六行上限，而不是只检查 HTML 源码。若只能通过改动正文文字
-才能修复，按 `recovery-rules.md` 从 `final` 阶段失效并重新完成审批及下游流程；
-不得在已批准正文或已锁定预测之后静默改字。
+`output/html-qc.md` 的"9 项排版检查"段按契约文档逐项记录复核结果；若只能通过
+改动正文文字才能修复，按 `recovery-rules.md` 从 `final` 阶段失效并重新完成审批及
+下游流程；不得在已批准正文或已锁定预测之后静默改字。
 
 ## Prediction gate
 
@@ -90,16 +68,40 @@ new immutable prediction version while preserving prior prediction history.
 
 ### v2 shadow gate
 
-After the official v1 prediction, a project that explicitly enables v2 shadow may create an
-isolated Channel B. Channel B may read only the current approved final and
-`reports/rubric-v2-candidate-rules.md`. It MUST NOT read `reports/rubric-v2-candidate.md`,
-historical performance, retro, rubric memo, old predictions, article names, or post-publication
-feedback.
+启用 v2 影子打分的项目在 v1 预测后、看到实绩前，可以对当前已批准终稿跑一次隔离的
+Channel B 影子打分。该打分**只**为 bump 积累 v2 证据，不得替代、修改或触发现役 v1。
 
-Lock the shadow result as an independent immutable sidecar before publication data appears. It
-must not replace the official v1 prediction, update `.cheat-state.json.rubric_version`, or trigger
-a rubric bump by itself. If the project lacks an approved shadow runner or route, block the shadow
-step and report the missing route; do not simulate it with an ad hoc model call.
+**调用入口**：根 `cheat-on-content` 的 `cheat-predict --blind-rescore` 模式。
+v1.4+ 起该模式支持 `--rubric <path>` 指定替代 rubric 文件。v2 影子必须传：
+
+```
+cheat-predict --blind-rescore \
+  --prediction-file <prediction_file> \
+  --rubric reports/rubric-v2-candidate-rules.md
+```
+
+**Channel B 隔离协议**（与 [cheat-score-blind](../cheat-on-content/../skills/cheat-on-content/skills/cheat-score-blind/SKILL.md) 一致）：
+
+- **允许读**：`scripts/<id>.md` + `reports/rubric-v2-candidate-rules.md`（v2 候选规则正文）
+- **禁止读**：`reports/rubric-v2-candidate.md`（v2 候选证据档，含实绩）、历史
+  `predictions/*.md` 的复盘段、`rubric-memo.md`、`.cheat-state.json` 历史字段、
+  `videos/*/report.md`、老预测、文章名、发布后评论
+
+**落盘**：sidecar 写到 `.cheat-cache/blind-rescores/<id>.json`（v1.4+ 统一路径），
+`trigger: "blind_rescore"`，`rubric_version` 标注为 `v2-candidate`。该 sidecar **不**
+覆盖 v1 retro Phase 5.5 的 `retro_shadow` 触发（若 T+2 retro 尚未跑，新 sidecar
+优先级最高）。
+
+**边界**：
+- **不**替代 v1 预测
+- **不**改 `.cheat-state.json.rubric_version`（仍为 v1）
+- **不**单独触发 rubric bump（bump 须走完整 5 步协议）
+- 缺失 `cheat-on-content` 或缺失 `reports/rubric-v2-candidate-rules.md` → 阻塞影子
+  步骤并报告缺失路由；**不**用 ad hoc model call 模拟
+
+**v2 候选证据积累**：`bump --propose` 落地前累计 ≥3 篇同向 v2 shadow 即可作为 bump
+候选。v2 shadow 与 v1 retro shadow 的 sidecar 共用 `.cheat-cache/blind-rescores/`，
+`trigger` 字段区分。
 
 ## Visual gate
 
@@ -137,8 +139,11 @@ After root `gzh-design` creates the copy preview, run
 `scripts/upgrade_preview_copy.py output/article-copy-preview.html`. This preserves the original
 copy fallback but writes the intended fragment as explicit `text/html` when the browser supports
 the Clipboard API, preventing Chromium from flattening block hierarchy during selection-based
-copy. A missing or unrecognized `gzhCopy` function blocks the gate; do not silently claim that
-the preview was upgraded.
+copy. The upgrade must also make local images portable in the clipboard payload: before the
+copy gate, verify that every local `<img>` source in the copy preview is embedded as
+`data:image/...` (or another resource form proven to survive the target paste) and that no
+`../visuals/...` path remains in the clipboard HTML. A missing or unrecognized `gzhCopy`
+function blocks the gate; do not silently claim that the preview was upgraded.
 
 Then click the upgraded preview copy button and paste the intended article body into a clean local `contenteditable` surface or a WeChat-compatible rich-text sandbox. Confirm that the button reports `clipboard-api`; if it reports `legacy-fallback`, record that downgrade and do not assume block hierarchy survived. Inspect the pasted clipboard HTML DOM, not only the preview: verify content hierarchy, required inline styles, link targets, image nodes and sources, content order, and the absence of preview-only controls or labels. If an already-authenticated WeChat editor is available, additionally validate the paste there; do not require a WeChat login or credentials as the default prerequisite. Report the copy method, the two checked widths, the paste target, and the result of each DOM and layout check before marking the stage complete.
 
@@ -147,3 +152,15 @@ result, and all nine 微信长文排版契约 results to `output/html-qc.md`. Do
 `gzh-design`, deterministic validation, both browser preview checks, and the pasted-DOM inspection
 have all passed. Missing `gzh-design` blocks HTML completion; no generic formatter or hand-written
 HTML substitutes for this gate.
+
+`output/html-qc.md` 的结构按 [`assets/article-project-template/output/html-qc.template.md`](../assets/article-project-template/output/html-qc.template.md)：
+- 五件套存在性
+- gzh-design 调用记录
+- 9 项排版契约（3 文本级 + 5 视觉级 + final.md SHA256 绑定）
+- 浏览器视口检查（≤390 / ≥900）
+- 复制与粘贴（`clipboard-api` / `legacy-fallback` + pasted DOM）
+- validate_project 与确定性校验
+- final.md SHA256 一致性
+- 阻塞原因（如有）
+
+每项标 ✅ / ❌；❌ 项必须给具体复现路径。

@@ -12,7 +12,7 @@ class MultiplatformContractTests(unittest.TestCase):
     def test_current_wechat_skill_is_single_platform(self):
         self.assertEqual(
             (SKILL_ROOT / 'agents' / 'openai.yaml').read_text(encoding='utf-8-sig'),
-            'interface:\n  display_name: "WeChat Article Writing"\n  short_description: "从账号状态、内容策略与风格学习到配图、排版和复盘的公众号总控工作流"\n  default_prompt: "Use $wechat-article-writing to create or improve a Chinese WeChat article through verified delivery and optional style learning."\n',
+            'interface:\n  display_name: "WeChat Article Writing"\n  short_description: "从账号状态、内容策略与风格学习到配图、排版和复盘的公众号总控工作流"\n  default_prompt: "Use $wechat-article-writing to create or improve a Chinese WeChat article through verified delivery and, when enabled, continuously observe the account\'s approved final drafts for style evolution."\n',
         )
 
     def test_wechat_delivery_contract_does_not_register_other_platforms(self):

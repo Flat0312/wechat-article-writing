@@ -42,6 +42,8 @@ description: Detailed execution runbook for dependency checks, project setup, ar
 python scripts/dependency_check.py --stage account
 python scripts/dependency_check.py --stage topic
 python scripts/dependency_check.py --stage topic-ai
+python scripts/dependency_check.py --stage news-card
+python scripts/dependency_check.py --stage news-card-ai
 python scripts/dependency_check.py --stage writing
 python scripts/dependency_check.py --stage strategy
 python scripts/dependency_check.py --stage editing
@@ -62,8 +64,8 @@ python scripts/dependency_check.py --stage retro
 | 缺失 Skill | 安装命令（对用户说） |
 |---|---|
 | `cheat-on-content` | `帮我安装 https://github.com/XBuilderLAB/cheat-on-content` |
-| `khazix-writer` | `帮我安装 https://github.com/KKKKhazix/khazix-skills`（只需 khazix-writer） |
-| `humanizer-zh` | `帮我安装 https://github.com/op7418/Humanizer-zh` |
+| `khazix-writer` | `帮我安装 https://github.com/KKKKhazix/khazix-skills`（只需 khazix-writer；它是必需的技法辅助，不是作者声音） |
+| `humanizer-zh` | `帮我安装 https://github.com/op7418/Humanizer-zh`（可选诊断器，缺失时使用本 Skill 的 AI 痕迹门禁） |
 | `wechat-content-strategy` | 源码位于本仓库 `companion-skills/wechat-content-strategy`；修复指向该目录的同级运行时联接 |
 | `wechat-style-learning` | 源码位于本仓库 `companion-skills/wechat-style-learning`；修复指向该目录的同级运行时联接 |
 | `creator-buddy` | `帮我安装 https://github.com/SpaceZephyr/creator-buddy` |
@@ -162,11 +164,12 @@ python scripts/validate_project.py profile <账号目录>
 
 ## 第四步：执行文章流水线
 
-文章绑定标准长期账号画像时，在进入大纲和初稿前解析画像并读取 `voice.md` 与
-`content-patterns.md`。将 `voice.md` 和 `style-learning:validated` 区块作为硬约束，
-将 `style-learning:provisional` 区块作为软参考。优先级依次为：用户当次明确要求与
-已核验事实/证据/经历/观点、账号文风与已验证规则、当篇策略参数、待验证规则、
-`khazix-writer` 默认口吻。不得为套用文风新增素材。
+文章绑定标准长期账号画像时，在进入大纲和初稿前解析画像并读取 `voice.md`、
+`content-patterns.md` 和 `references/writing-style.md`。将 `voice.md` 和
+`style-learning:validated` 区块作为作者声音的硬约束，将 `style-learning:provisional`
+区块作为主动选择的实验。优先级依次为：用户当次明确要求与已核验事实/证据/经历/观点、
+账号文风与已验证规则、文风执行卡、卡兹克返回的兼容技法建议、未选中的通用建议。
+不得为套用任何文风新增素材。
 
 下表只适用于 `content_kind=long-essay`；资讯贴图使用上面的轻量项目，不进入本表。
 
@@ -175,9 +178,11 @@ python scripts/validate_project.py profile <账号目录>
 | 简报 | 明确主题、受众、观点、材料、字数和时效 | `brief.md` |
 | 选题 | `creator-buddy` 跨平台信号 + 显式公众号爆款分支 + AI 主题的 `aihot` -> 候选归一化、去重、保留来源 -> 根 Cheat 评分与决策 -> 用户确认角度 | `topic-brief.md` + Cheat 引用 |
 | 调研 | 核查当前事实和原始来源 | `research/evidence.md`、`research/sources.json` |
-| 大纲 | 调用 `wechat-content-strategy`，从已核验材料选择一种内容增强策略，确定中心论点、文章级写作参数、结构、证据位置和编辑锚点 | `outline.md` |
-| 初稿 | 使用 `khazix-writer` 作为唯一起草引擎，按账号文风、已验证规则和大纲参数生成初稿；不得让其默认口吻覆盖账号规则 | `drafts/draft-v1.md` |
-| 审校 | 事实核查、结构、账号适配、`humanizer-zh` 去 AI 痕迹 | `drafts/final.md` |
+| 大纲 | 调用 `wechat-content-strategy`，从已核验材料选择一种内容增强策略，确定中心论点、文章级写作参数、文风执行卡、结构、证据位置和编辑锚点 | `outline.md` |
+| 技法辅助 | 在文风执行卡锁定后调用 `khazix-writer`，只获取结构、场景、类比、节奏和自检建议 | 辅助结果，不直接作为正文 |
+| 初稿 | 由本 Skill 按文风执行卡融合用户声音与兼容技法，生成初稿；不得让卡兹克默认人格覆盖账号规则 | `drafts/draft-v1.md` |
+| 审校 | 事实核查、结构、账号适配、文笔终检；`humanizer-zh` 只作可选 AI 痕迹诊断 | `drafts/final.md` |
+| 终稿观察 | 持续学习启用时，终稿批准并锁定 SHA256 后提炼 0–5 条跨篇候选，写入观察账本；不改变正文、审批或预测 | `account-profile/history/voice-observations/` |
 | 预测 | 最终稿确认后调用 Cheat | Cheat 预测引用 |
 | 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
 | 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、`output/article-preview.html`、`output/article-copy.html`、`output/article-copy-preview.html`、`output/html-qc.md` |
@@ -204,9 +209,11 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 - 普通端到端创作始终由本 Skill 总控；在证据关卡通过后内部调用 `wechat-content-strategy`。
 - 用户明确只要选题深化、内容增强或大纲时，仍先由本 Skill 补齐 Cheat 决策和事实前置，再允许直接进入 `wechat-content-strategy`。
 - 用户明确说“学习我的修改”“沉淀文风”时，检查长期账号、初稿和人工定稿，再调用 `wechat-style-learning`。先展示候选规则，用户确认后才写入账号学习账本。
+- 用户明确启用“持续学习”后，每篇已批准终稿都调用 `wechat-style-learning observe-final`；观察结果只进入软观察层，至少 3 篇不同文章重复且无冲突后标记为 `candidate`，晋级硬规则前仍展示并取得确认。
 - 学习动作不改变当前文章内容、审批、预测或状态，也不触发当前文章的 stale 传播；新规则从下一篇文章开始生效。
 
-执行事实、写作、视觉和 HTML 检查时读取 `references/quality-gates.md`。进入交付或外部写入时读取 `references/publishing.md`。
+执行事实、写作、视觉和 HTML 检查时读取 `references/quality-gates.md` 与
+`references/writing-style.md`。进入交付或外部写入时读取 `references/publishing.md`。
 
 ## 预测与审批
 
@@ -224,8 +231,9 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 选择 Baoyu 轨道时，先运行 `python scripts/baoyu_adapter.py prepare <文章目录>`，只把 `visuals/assets/baoyu/source.md` 交给根 Skill；结束后运行 `python scripts/baoyu_adapter.py verify <文章目录>`，确保已批准的 `drafts/final.md` 没有被改写。
 
-`gzh-design` 是 HTML 完成的必经路线。调用时必须把 `references/quality-gates.md`
-中的“微信长文排版契约”作为高于主题配方和默认智能处理的硬约束传入。还要运行文章
+`gzh-design` 是 HTML 完成的必经路线。调用时必须把
+`references/wechat-layout-contract.md` 的 8 条契约（3 文本级 + 5 视觉级）作为
+高于主题配方和默认智能处理的硬约束传入。还要运行文章
 验证器。HTML 预览必须分别在 <=390 CSS px 和 >=900 CSS px 两种视口检查。还要把
 正文实际粘贴到干净的 `contenteditable` 或微信兼容沙箱检查 DOM，并把九项排版检查
 结果逐项写入 `output/html-qc.md`。全部通过后才可标记 HTML 完成。
@@ -241,8 +249,9 @@ HTML 阶段必须同时保留：
 其中 `article-copy.html` 是人工粘贴交付物，`artifacts.html.path` 必须指向它。
 `gzh-design` 生成预览页后，运行
 `python scripts/upgrade_preview_copy.py <output/article-copy-preview.html>`，把复制按钮
-加固为显式 `text/html` 剪贴板写入并保留旧式复制作为回退。随后必须实际点击该按钮
-再粘贴检查；只检查干净 HTML 文件不能替代剪贴板门禁。把窄/宽视口、图片加载、
+加固为显式 `text/html` 剪贴板写入并保留旧式复制作为回退，同时把本地图片内嵌到复制
+载荷。随后必须静态确认复制 HTML 中没有 `../visuals/...` 图片路径，再实际点击该按钮
+并粘贴检查；只检查干净 HTML 文件不能替代剪贴板门禁。把窄/宽视口、图片加载、
 复制方法、粘贴目标和 pasted DOM 结果写入 `output/html-qc.md`。
 
 ## 失败与恢复

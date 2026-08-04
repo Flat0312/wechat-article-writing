@@ -46,6 +46,19 @@ class PreviewCopyUpgradeTests(unittest.TestCase):
         self.assertIn("window.gzhCopy = async function wechatArticleRichCopy()", html)
         self.assertIn("navigator.clipboard.write", html)
 
+    def test_upgrade_inlines_local_image_sources(self):
+        asset = Path(self.temp.name) / "asset.png"
+        asset.write_bytes(b"png-bytes")
+        preview = self._write_text(
+            f'<html><body><div id="gzh-content"><img src="{asset.name}"></div>'
+            f'<button id="gzhCopyBtn">copy</button><script>{upgrade_preview_copy.EXPECTED_COPY_FUNCTION_TEXT}</script></body></html>'
+        )
+
+        self.assertEqual(upgrade_preview_copy.upgrade_preview(preview), True)
+        html = preview.read_text(encoding="utf-8")
+        self.assertIn('src="data:image/png;base64,cG5nLWJ5dGVz"', html)
+        self.assertNotIn(f'src="{asset.name}"', html)
+
     def test_modified_copy_function_is_rejected(self):
         preview = self._write_text('<html><body><div id="gzh-content">body</div><button id="gzhCopyBtn">copy</button><script>function gzhCopy() { return true; }' + '\nconst extra = true;\n' + '</script></body></html>')
         with self.assertRaises(ValueError):

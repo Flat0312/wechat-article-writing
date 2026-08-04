@@ -31,6 +31,24 @@ The authoritative `STAGES` order is exactly:
 
 `set_stage` changes only `current_stage` and the named `stage_status`; it does not propagate staleness or persist the state. After content or an artifact at an upstream stage changes, the orchestrator MUST explicitly call `invalidate_from` with that changed stage and MUST persist the resulting state before continuing the workflow. A status-only transition is not an upstream content change.
 
+### Stage → confirmation class mapping
+
+`wechat-article-writing` 公开 5 个用户确认节点（见 `references/onboarding.md` "Five confirmation classes"），
+但 `article-state.json` 跟踪 12 个 stage。本表把确认节点和 stage 显式对齐：
+
+| 确认节点 | 关联 stage | 隐式校验 |
+|---|---|---|
+| 1. 账号配置 / 导入预览 | （项目级，不在 article-state） | `account.json` 校验 |
+| 2. 选题角度 + 受众 | `brief`, `topic` | `evidence` 阶段事实核查后回链 |
+| 3. 大纲事实边界 | `outline` | `evidence` 锚点校验 + `outline` 写前卡片 8 项 |
+| 4. 最终正文 | `draft`, `final` | `final.artifact_sha256` 绑定 + 排版契约 8 项 |
+| 5. 视觉交付（计划 + HTML） | `visual_plan`, `visuals`, `html` | `html-qc.md` 全部通过 + 5 件套存在 |
+
+`evidence` 和 `draft` 不单独暴露给用户确认——它们由相邻 stage 的确认隐式覆盖
+（`outline` 必须以 `evidence.md` 为前提；`final` 必须以 `drafts/final.md` 为前提）。
+任一上游被改都触发 `invalidate_from` 链路；用户最坏情况下需要重新确认 `final`。
+
+
 ## Status values
 
 Allowed values are `pending`, `in_progress`, `awaiting_confirmation`, `completed`, `failed`, `skipped`, and `stale`.

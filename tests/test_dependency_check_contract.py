@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import sys
 import unittest
 from pathlib import Path
+
+
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL_ROOT / 'scripts'))
 
 
 class DependencyCheckContractTests(unittest.TestCase):
@@ -104,6 +109,99 @@ class DependencyCheckContractTests(unittest.TestCase):
         self.assertEqual(
             structured["missing_required"], ["baoyu-article-illustrator"]
         )
+
+    def test_news_card_stage_requires_5_lane_signals_and_cover(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies(
+            "news-card",
+            self._discovered(
+                "cheat-on-content",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "wechat-content-strategy",
+            ),
+        )
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["missing_required"], ["cheat-trends"])
+        self.assertEqual(
+            result["missing_any"],
+            [["guizang-social-card-skill", "imagegen"]],
+        )
+
+    def test_news_card_stage_passes_with_minimal_5_lane_signals(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies(
+            "news-card",
+            self._discovered(
+                "cheat-on-content",
+                "cheat-trends",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "wechat-content-strategy",
+                "guizang-social-card-skill",
+            ),
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["missing_required"], [])
+        self.assertEqual(result["missing_any"], [])
+        self.assertEqual(result["optional_missing"], [])
+
+    def test_news_card_stage_accepts_imagegen_as_cover_fallback(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies(
+            "news-card",
+            self._discovered(
+                "cheat-on-content",
+                "cheat-trends",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "wechat-content-strategy",
+                "imagegen",
+            ),
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["missing_required"], [])
+        self.assertEqual(result["missing_any"], [])
+
+    def test_news_card_ai_stage_requires_aihot(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies(
+            "news-card-ai",
+            self._discovered(
+                "cheat-on-content",
+                "cheat-trends",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "wechat-content-strategy",
+                "guizang-social-card-skill",
+            ),
+        )
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["missing_required"], ["aihot"])
+
+    def test_news_card_ai_stage_passes_with_aihot(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies(
+            "news-card-ai",
+            self._discovered(
+                "cheat-on-content",
+                "cheat-trends",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "wechat-content-strategy",
+                "aihot",
+                "imagegen",
+            ),
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["missing_required"], [])
+        self.assertEqual(result["missing_any"], [])
+        self.assertEqual(result["optional_missing"], [])
 
 
 if __name__ == "__main__":

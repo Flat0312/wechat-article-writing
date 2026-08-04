@@ -147,12 +147,17 @@ def _create_layout(output):
     (output / "history" / "articles").mkdir(parents=True)
     (output / "history" / "retros").mkdir(parents=True)
     (output / "history" / "edits").mkdir(parents=True)
+    (output / "history" / "voice-observations").mkdir(parents=True)
     for profile_doc in PROFILE_DOCS:
         shutil.copyfile(TEMPLATE_ROOT / profile_doc, output / profile_doc)
     _write_json(output / "history" / "articles" / "index.json", {"items": []})
     _write_json(output / "history" / "retros" / "index.json", {"items": []})
     _write_json(
         output / "history" / "edits" / "index.json",
+        {"schema_version": "1.0", "items": []},
+    )
+    _write_json(
+        output / "history" / "voice-observations" / "index.json",
         {"schema_version": "1.0", "items": []},
     )
     (output / ".gitignore").write_text(

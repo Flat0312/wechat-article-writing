@@ -9,17 +9,24 @@ that function untouched and injects a wrapper that first writes explicit HTML.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
+import mimetypes
 import os
 from pathlib import Path
 import re
 import tempfile
 import textwrap
+from urllib.parse import unquote, urlsplit
 
 
 UPGRADE_MARKER = '<script data-wechat-article-copy-upgrade="1">'
 WRAPPER_SIGNATURE = "window.gzhCopy = async function wechatArticleRichCopy()"
+IMAGE_SRC_ATTRIBUTE = re.compile(
+    r'(?P<prefix><img\b[^>]*?\bsrc=)(?P<quote>["\'])(?P<src>.*?)(?P=quote)',
+    re.IGNORECASE,
+)
 SCRIPT_BLOCK = re.compile(r"(?is)<script(?:\s[^>]*)?>(.*?)</script>")
 COPY_FUNCTION = re.compile(r"(?m)^[ \t]*function gzhCopy\(\)\s*\{")
 EXPECTED_COPY_FUNCTION_TEXT = (
@@ -157,6 +164,44 @@ def _extract_braced_function(script: str, start: int) -> str | None:
     return None
 
 
+def _local_image_data_url(src: str, preview: Path) -> str | None:
+    parsed = urlsplit(src)
+    if parsed.scheme or parsed.netloc or src.startswith("//"):
+        return None
+    relative = unquote(parsed.path)
+    if not relative:
+        return None
+
+    preview_dir = preview.resolve().parent
+    project_root = preview_dir.parent
+    candidate = (preview_dir / Path(relative)).resolve()
+    try:
+        candidate.relative_to(project_root)
+    except ValueError:
+        return None
+    if not candidate.is_file():
+        return None
+
+    mime_type, _ = mimetypes.guess_type(candidate.name)
+    if not mime_type or not mime_type.startswith("image/"):
+        return None
+    encoded = base64.b64encode(candidate.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def _inline_local_images(html: str, preview: Path) -> tuple[str, int]:
+    def replace(match: re.Match[str]) -> str:
+        data_url = _local_image_data_url(match.group("src"), preview)
+        if data_url is None:
+            return match.group(0)
+        return (
+            f"{match.group('prefix')}{match.group('quote')}"
+            f"{data_url}{match.group('quote')}"
+        )
+
+    return IMAGE_SRC_ATTRIBUTE.subn(replace, html)
+
+
 def upgrade_preview(path: Path) -> bool:
     preview = Path(path)
     original = preview.read_text(encoding="utf-8")
@@ -177,7 +222,9 @@ def upgrade_preview(path: Path) -> bool:
     body_end = original.lower().rfind("</body>")
     if body_end < 0:
         raise ValueError("preview does not contain a closing body tag")
-    upgraded = original[:body_end] + WRAPPER + original[body_end:]
+    inlined_content, _ = _inline_local_images(original, preview)
+    body_end = inlined_content.lower().rfind("</body>")
+    upgraded = inlined_content[:body_end] + WRAPPER + inlined_content[body_end:]
 
     _atomic_write(preview, upgraded)
     return True

@@ -30,9 +30,36 @@ STAGE_RULES = {
             "aihot",
         ],
     },
+    # 资讯贴图（news-card）：与 long-essay 并行但走独立轻量分支。
+    # 不进 12 阶段 article-state.json，不走 long-essay 视觉/HTML 轨道。
+    # 卡图走 guizang 合成或 imagegen 兜底（与 long-essay 头图相同的 21:9 单图契约）。
+    # AI 账号或 AI 主题改用 news-card-ai，加 aihot。
+    "news-card": {
+        "required": [
+            "cheat-on-content",
+            "cheat-trends",
+            "creator-buddy",
+            "gzh-explosive-content-detector",
+            "wechat-content-strategy",
+        ],
+        "any": [["guizang-social-card-skill", "imagegen"]],
+    },
+    "news-card-ai": {
+        "required": [
+            "cheat-on-content",
+            "cheat-trends",
+            "creator-buddy",
+            "gzh-explosive-content-detector",
+            "wechat-content-strategy",
+            "aihot",
+        ],
+        "any": [["guizang-social-card-skill", "imagegen"]],
+    },
+    # 卡兹克必须参与技法辅助，但不得成为账号作者声音。
     "writing": {"required": ["khazix-writer"]},
     "strategy": {"required": ["wechat-content-strategy"]},
-    "editing": {"required": ["humanizer-zh"]},
+    # 去 AI 痕迹是可执行的第一方门禁；Humanizer-zh 只作为可选诊断器。
+    "editing": {"optional": ["humanizer-zh"]},
     "learning": {"required": ["wechat-style-learning"]},
     "cover": {"any": [["guizang-social-card-skill", "imagegen"]]},
     "visual": {

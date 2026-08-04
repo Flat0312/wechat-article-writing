@@ -30,6 +30,8 @@ VALIDATED_START = "<!-- style-learning:validated:start -->"
 VALIDATED_END = "<!-- style-learning:validated:end -->"
 PROVISIONAL_START = "<!-- style-learning:provisional:start -->"
 PROVISIONAL_END = "<!-- style-learning:provisional:end -->"
+OBSERVATION_SCHEMA_VERSION = "1.0"
+OBSERVATION_PREFIX = "history/voice-observations/"
 
 
 def _read_json(path: Path) -> Any:
@@ -123,6 +125,8 @@ def _normalize_rules(rules: list[dict[str, str]]) -> list[dict[str, str]]:
         instruction = instruction.strip()
         if MACHINE_PATH_RE.search(instruction):
             raise ValueError(f"Rule {key} contains a machine path")
+        if "\ufffd" in instruction or re.fullmatch(r"[?？\s]+", instruction):
+            raise ValueError(f"Rule {key} contains corrupted text")
         if "\n" in instruction or len(instruction) > 240:
             raise ValueError(f"Rule {key} must be a compact single-line instruction")
         seen.add(key)
@@ -245,6 +249,145 @@ def _update_patterns(profile: Path, rules: list[dict[str, Any]]) -> None:
     _atomic_write_text(path, text.rstrip() + "\n")
 
 
+def _load_observation_index(profile: Path) -> dict[str, Any]:
+    index_path = profile / "history" / "voice-observations" / "index.json"
+    if not index_path.exists():
+        return {"schema_version": OBSERVATION_SCHEMA_VERSION, "items": []}
+    index = _read_json(index_path)
+    if (
+        not isinstance(index, dict)
+        or index.get("schema_version") != OBSERVATION_SCHEMA_VERSION
+        or not isinstance(index.get("items"), list)
+    ):
+        raise ValueError("Invalid voice-observation index")
+    return index
+
+
+def _observation_path(profile: Path, source_ref: str) -> Path:
+    reference = PurePosixPath(source_ref)
+    if (
+        reference.is_absolute()
+        or ".." in reference.parts
+        or not source_ref.startswith(OBSERVATION_PREFIX)
+    ):
+        raise ValueError("Invalid voice-observation source reference")
+    return profile.joinpath(*reference.parts)
+
+
+def aggregate_observations(
+    profile: str | Path,
+    as_of: date | None = None,
+) -> list[dict[str, Any]]:
+    profile_path = Path(profile).expanduser().resolve()
+    _validate_profile(profile_path)
+    index = _load_observation_index(profile_path)
+    target_date = as_of or datetime.now(timezone.utc).date()
+    grouped: dict[str, dict[str, Any]] = {}
+
+    for item in index["items"]:
+        lesson = _read_json(_observation_path(profile_path, item["source_ref"]))
+        observed = datetime.fromisoformat(lesson["created_at"]).date()
+        for rule in lesson["rules"]:
+            current = grouped.get(rule["key"])
+            if current is None:
+                current = {
+                    "key": rule["key"],
+                    "type": rule["type"],
+                    "instruction": rule["instruction"],
+                    "occurrences": 0,
+                    "article_ids": set(),
+                    "first_seen": observed,
+                    "last_seen": observed,
+                    "source_refs": [],
+                }
+                grouped[rule["key"]] = current
+            current["occurrences"] += 1
+            current["article_ids"].add(lesson["article_id"])
+            current["first_seen"] = min(current["first_seen"], observed)
+            if observed >= current["last_seen"]:
+                current["last_seen"] = observed
+                current["type"] = rule["type"]
+                current["instruction"] = rule["instruction"]
+            current["source_refs"].append(item["source_ref"])
+
+    result = []
+    for current in grouped.values():
+        age_days = max(0, (target_date - current["last_seen"]).days)
+        article_count = len(current["article_ids"])
+        result.append(
+            {
+                "key": current["key"],
+                "type": current["type"],
+                "instruction": current["instruction"],
+                "occurrences": current["occurrences"],
+                "article_count": article_count,
+                "status": "candidate" if article_count >= 3 else "observed",
+                "first_seen": current["first_seen"].isoformat(),
+                "last_seen": current["last_seen"].isoformat(),
+                "stale": age_days >= 180,
+                "source_refs": current["source_refs"],
+            }
+        )
+    return sorted(result, key=lambda rule: (-rule["article_count"], -rule["occurrences"], rule["key"]))
+
+
+def observe_final(
+    profile: str | Path,
+    final: str | Path,
+    article_id: str,
+    rules: list[dict[str, str]],
+    timestamp: datetime | None = None,
+) -> dict[str, Any]:
+    """Record final-only style observations without promoting them to hard rules."""
+    profile_path = Path(profile).expanduser().resolve()
+    final_path = Path(final).expanduser().resolve()
+    _validate_profile(profile_path)
+    if not final_path.is_file():
+        raise FileNotFoundError("The final file is required")
+    if not isinstance(article_id, str) or not article_id.strip():
+        raise ValueError("article_id is required")
+
+    normalized_rules = _normalize_rules(rules)
+    final_hash = _sha256(final_path)
+    observed = _normalize_timestamp(timestamp)
+    index = _load_observation_index(profile_path)
+    for item in index["items"]:
+        if item.get("article_id") == article_id.strip() and item.get("final_sha256") == final_hash:
+            return {
+                "status": "already_observed",
+                "source_ref": item["source_ref"],
+                "observations": aggregate_observations(profile_path, as_of=observed.date()),
+            }
+
+    stamp = observed.strftime("%Y%m%d")
+    filename = f"{stamp}-{_portable_slug(article_id)}-{final_hash[:8]}.json"
+    source_ref = f"{OBSERVATION_PREFIX}{filename}"
+    created_at = observed.isoformat(timespec="seconds")
+    lesson = {
+        "schema_version": OBSERVATION_SCHEMA_VERSION,
+        "article_id": article_id.strip(),
+        "final_sha256": final_hash,
+        "created_at": created_at,
+        "rules": normalized_rules,
+    }
+    index_item = {
+        "source_ref": source_ref,
+        "article_id": lesson["article_id"],
+        "final_sha256": final_hash,
+        "created_at": created_at,
+    }
+    _atomic_write_json(_observation_path(profile_path, source_ref), lesson)
+    index["items"].append(index_item)
+    _atomic_write_json(
+        profile_path / "history" / "voice-observations" / "index.json", index
+    )
+    return {
+        "status": "observed",
+        "source_ref": source_ref,
+        "observations": aggregate_observations(profile_path, as_of=observed.date()),
+    }
+
+
 def record_lesson(
     profile: str | Path,
     draft: str | Path,
@@ -338,6 +481,23 @@ def _main(argv: list[str] | None = None) -> int:
     aggregate.add_argument("--profile", required=True, type=Path)
     aggregate.add_argument("--as-of", type=date.fromisoformat)
 
+    observe = subparsers.add_parser(
+        "observe-final",
+        help="Record style observations from one approved final without promotion",
+    )
+    observe.add_argument("--profile", required=True, type=Path)
+    observe.add_argument("--final", required=True, type=Path)
+    observe.add_argument("--article-id", required=True)
+    observe.add_argument("--rules", required=True, type=Path)
+    observe.add_argument("--timestamp", type=datetime.fromisoformat)
+
+    observations = subparsers.add_parser(
+        "aggregate-observations",
+        help="Read final-only observations and candidate status",
+    )
+    observations.add_argument("--profile", required=True, type=Path)
+    observations.add_argument("--as-of", type=date.fromisoformat)
+
     args = parser.parse_args(argv)
     if args.command == "record":
         payload = record_lesson(
@@ -348,10 +508,25 @@ def _main(argv: list[str] | None = None) -> int:
             _read_json(args.rules),
             approved=args.approved,
         )
-    else:
+    elif args.command == "aggregate":
         payload = {
             "status": "ok",
             "rules": aggregate_rules(args.profile, as_of=args.as_of),
+        }
+    elif args.command == "observe-final":
+        payload = observe_final(
+            args.profile,
+            args.final,
+            args.article_id,
+            _read_json(args.rules),
+            timestamp=args.timestamp,
+        )
+    else:
+        payload = {
+            "status": "ok",
+            "observations": aggregate_observations(
+                args.profile, as_of=args.as_of
+            ),
         }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
