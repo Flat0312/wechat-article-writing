@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,12 @@ class DependencyCheckContractTests(unittest.TestCase):
     @staticmethod
     def _discovered(*names: str):
         return {name: Path("C:/skills") / name for name in names}
+
+    @staticmethod
+    def _cli_env(tmpdir: str):
+        cli = Path(tmpdir) / "xtf.exe"
+        cli.write_text("stub", encoding="utf-8")
+        return {"X_TWEET_FETCHER_BIN": str(cli)}
 
     def test_unknown_stage_raises(self):
         import dependency_check
@@ -28,8 +35,47 @@ class DependencyCheckContractTests(unittest.TestCase):
         )
         self.assertFalse(result["ok"])
         self.assertEqual(
-            result["missing_required"], ["cheat-trends", "creator-buddy", "gzh-explosive-content-detector"]
+            result["missing_required"],
+            [
+                "cheat-trends",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "xiaohongshu-skill",
+            ],
         )
+
+    def test_topic_reports_missing_x_cli_separately_from_skill_presence(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies(
+            "topic",
+            self._discovered(
+                "cheat-on-content",
+                "cheat-trends",
+                "creator-buddy",
+                "gzh-explosive-content-detector",
+                "xiaohongshu-skill",
+            ),
+            env={"X_TWEET_FETCHER_BIN": "C:/missing/xtf.exe"},
+        )
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["missing_required"], [])
+        self.assertEqual(
+            result["cli_runtime"]["missing_required"], ["x-tweet-fetcher"]
+        )
+        self.assertIn("xiaohongshu-skill", result["skill_presence"]["available"])
+
+    def test_pipeline_stage_aliases_are_explicit(self):
+        import dependency_check
+
+        self.assertEqual(dependency_check.STAGE_ALIASES["brief"], "strategy")
+        self.assertEqual(dependency_check.STAGE_ALIASES["evidence"], "topic")
+        self.assertEqual(dependency_check.STAGE_ALIASES["prediction"], "publish")
+        self.assertEqual(dependency_check.STAGE_ALIASES["visual_plan"], "visual")
+        result = dependency_check.check_dependencies(
+            "prediction", self._discovered("cheat-on-content")
+        )
+        self.assertEqual(result["resolved_stage"], "publish")
 
     def test_publish_stage_passes_with_only_cheat(self):
         import dependency_check
@@ -121,9 +167,12 @@ class DependencyCheckContractTests(unittest.TestCase):
                 "gzh-explosive-content-detector",
                 "wechat-content-strategy",
             ),
+            env={"X_TWEET_FETCHER_BIN": "C:/missing/xtf.exe"},
         )
         self.assertFalse(result["ok"])
-        self.assertEqual(result["missing_required"], ["cheat-trends"])
+        self.assertEqual(
+            result["missing_required"], ["cheat-trends", "xiaohongshu-skill"]
+        )
         self.assertEqual(
             result["missing_any"],
             [["guizang-social-card-skill", "imagegen"]],
@@ -132,17 +181,20 @@ class DependencyCheckContractTests(unittest.TestCase):
     def test_news_card_stage_passes_with_minimal_5_lane_signals(self):
         import dependency_check
 
-        result = dependency_check.check_dependencies(
-            "news-card",
-            self._discovered(
-                "cheat-on-content",
-                "cheat-trends",
-                "creator-buddy",
-                "gzh-explosive-content-detector",
-                "wechat-content-strategy",
-                "guizang-social-card-skill",
-            ),
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = dependency_check.check_dependencies(
+                "news-card",
+                self._discovered(
+                    "cheat-on-content",
+                    "cheat-trends",
+                    "creator-buddy",
+                    "gzh-explosive-content-detector",
+                    "wechat-content-strategy",
+                    "xiaohongshu-skill",
+                    "guizang-social-card-skill",
+                ),
+                env=self._cli_env(tmpdir),
+            )
         self.assertTrue(result["ok"])
         self.assertEqual(result["missing_required"], [])
         self.assertEqual(result["missing_any"], [])
@@ -151,17 +203,20 @@ class DependencyCheckContractTests(unittest.TestCase):
     def test_news_card_stage_accepts_imagegen_as_cover_fallback(self):
         import dependency_check
 
-        result = dependency_check.check_dependencies(
-            "news-card",
-            self._discovered(
-                "cheat-on-content",
-                "cheat-trends",
-                "creator-buddy",
-                "gzh-explosive-content-detector",
-                "wechat-content-strategy",
-                "imagegen",
-            ),
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = dependency_check.check_dependencies(
+                "news-card",
+                self._discovered(
+                    "cheat-on-content",
+                    "cheat-trends",
+                    "creator-buddy",
+                    "gzh-explosive-content-detector",
+                    "wechat-content-strategy",
+                    "xiaohongshu-skill",
+                    "imagegen",
+                ),
+                env=self._cli_env(tmpdir),
+            )
         self.assertTrue(result["ok"])
         self.assertEqual(result["missing_required"], [])
         self.assertEqual(result["missing_any"], [])
@@ -177,8 +232,10 @@ class DependencyCheckContractTests(unittest.TestCase):
                 "creator-buddy",
                 "gzh-explosive-content-detector",
                 "wechat-content-strategy",
+                "xiaohongshu-skill",
                 "guizang-social-card-skill",
             ),
+            env={"X_TWEET_FETCHER_BIN": "C:/missing/xtf.exe"},
         )
         self.assertFalse(result["ok"])
         self.assertEqual(result["missing_required"], ["aihot"])
@@ -186,18 +243,21 @@ class DependencyCheckContractTests(unittest.TestCase):
     def test_news_card_ai_stage_passes_with_aihot(self):
         import dependency_check
 
-        result = dependency_check.check_dependencies(
-            "news-card-ai",
-            self._discovered(
-                "cheat-on-content",
-                "cheat-trends",
-                "creator-buddy",
-                "gzh-explosive-content-detector",
-                "wechat-content-strategy",
-                "aihot",
-                "imagegen",
-            ),
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = dependency_check.check_dependencies(
+                "news-card-ai",
+                self._discovered(
+                    "cheat-on-content",
+                    "cheat-trends",
+                    "creator-buddy",
+                    "gzh-explosive-content-detector",
+                    "wechat-content-strategy",
+                    "aihot",
+                    "xiaohongshu-skill",
+                    "imagegen",
+                ),
+                env=self._cli_env(tmpdir),
+            )
         self.assertTrue(result["ok"])
         self.assertEqual(result["missing_required"], [])
         self.assertEqual(result["missing_any"], [])

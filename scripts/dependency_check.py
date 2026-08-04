@@ -2,12 +2,29 @@ import argparse
 import json
 import os
 import re
+import shutil
 from pathlib import Path
 
 
 ALIASES = {
     "gzh-design-skill": "gzh-design",
     "Humanizer-zh": "humanizer-zh",
+}
+
+# These pipeline stages intentionally reuse an existing preflight rule. The
+# resolved stage is returned so callers can distinguish an alias from a gap.
+STAGE_ALIASES = {
+    "brief": "strategy",
+    "evidence": "topic",
+    "prediction": "publish",
+    "visual_plan": "visual",
+}
+
+CLI_RULES = {
+    "x-tweet-fetcher": {
+        "env": ("X_TWEET_FETCHER_BIN", "XTF_BIN"),
+        "commands": ("xtf", "xtf.exe", "x-tweet-fetcher"),
+    },
 }
 
 STAGE_RULES = {
@@ -19,7 +36,9 @@ STAGE_RULES = {
             "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
+            "xiaohongshu-skill",
         ],
+        "required_cli": ["x-tweet-fetcher"],
     },
     "topic-ai": {
         "required": [
@@ -28,7 +47,9 @@ STAGE_RULES = {
             "creator-buddy",
             "gzh-explosive-content-detector",
             "aihot",
+            "xiaohongshu-skill",
         ],
+        "required_cli": ["x-tweet-fetcher"],
     },
     # 资讯贴图（news-card）：与 long-essay 并行但走独立轻量分支。
     # 不进 12 阶段 article-state.json，不走 long-essay 视觉/HTML 轨道。
@@ -41,7 +62,9 @@ STAGE_RULES = {
             "creator-buddy",
             "gzh-explosive-content-detector",
             "wechat-content-strategy",
+            "xiaohongshu-skill",
         ],
+        "required_cli": ["x-tweet-fetcher"],
         "any": [["guizang-social-card-skill", "imagegen"]],
     },
     "news-card-ai": {
@@ -52,7 +75,9 @@ STAGE_RULES = {
             "gzh-explosive-content-detector",
             "wechat-content-strategy",
             "aihot",
+            "xiaohongshu-skill",
         ],
+        "required_cli": ["x-tweet-fetcher"],
         "any": [["guizang-social-card-skill", "imagegen"]],
     },
     # 卡兹克必须参与技法辅助，但不得成为账号作者声音。
@@ -118,6 +143,7 @@ def default_roots():
         Path.home() / ".codex" / "skills",
         Path.home() / ".agents" / "skills",
         Path.home() / ".claude" / "skills",
+        Path.home() / ".workbuddy" / "skills",
     ]
     extra_roots = os.environ.get("WECHAT_ARTICLE_SKILL_ROOTS", "")
     roots.extend(
@@ -172,11 +198,79 @@ def _visual_runtime(discovered):
     }
 
 
+def _resolve_stage(stage):
+    resolved = stage
+    seen = set()
+    while resolved in STAGE_ALIASES:
+        if resolved in seen:
+            raise ValueError(f"Cyclic stage alias: {stage}")
+        seen.add(resolved)
+        resolved = STAGE_ALIASES[resolved]
+    return resolved
+
+
+def _resolve_executable(candidate, env):
+    if not candidate:
+        return None
+    candidate_path = Path(str(candidate)).expanduser()
+    if candidate_path.is_file():
+        return str(candidate_path.resolve())
+    return shutil.which(str(candidate), path=env.get("PATH"))
+
+
+def _find_cli(cli_name, env):
+    spec = CLI_RULES[cli_name]
+    # An explicit override is authoritative, including an invalid path.
+    for env_name in spec["env"]:
+        if env_name in env:
+            path = _resolve_executable(env.get(env_name), env)
+            return {
+                "ok": path is not None,
+                "path": path,
+                "source": f"env:{env_name}",
+            }
+
+    default_paths = []
+    if cli_name == "x-tweet-fetcher":
+        default_paths.append(
+            Path.home()
+            / ".codex"
+            / "tools"
+            / "x-tweet-fetcher"
+            / ".venv"
+            / "Scripts"
+            / "xtf.exe"
+        )
+    for candidate in default_paths:
+        path = _resolve_executable(candidate, env)
+        if path:
+            return {"ok": True, "path": path, "source": "default"}
+    for command in spec["commands"]:
+        path = _resolve_executable(command, env)
+        if path:
+            return {"ok": True, "path": path, "source": "PATH"}
+    return {"ok": False, "path": None, "source": None}
+
+
+def _cli_runtime(required_cli, env=None):
+    environment = os.environ if env is None else env
+    checks = {name: _find_cli(name, environment) for name in required_cli}
+    available = [name for name, result in checks.items() if result["ok"]]
+    missing_required = [name for name, result in checks.items() if not result["ok"]]
+    return {
+        "required": list(required_cli),
+        "available": available,
+        "missing_required": missing_required,
+        "checks": checks,
+    }
+
+
 def check_dependencies(stage, discovered, env=None):
-    if stage not in STAGE_RULES:
+    resolved_stage = _resolve_stage(stage)
+    if resolved_stage not in STAGE_RULES:
         raise ValueError(f"Unknown stage: {stage}")
 
-    rules = STAGE_RULES[stage]
+    rules = STAGE_RULES[resolved_stage]
     available = sorted({canonical_name(name) for name in discovered})
     available_set = set(available)
     missing_required = [
@@ -190,23 +284,42 @@ def check_dependencies(stage, discovered, env=None):
     optional_missing = [
         name for name in rules.get("optional", []) if name not in available_set
     ]
-
-    result = {
-        "stage": stage,
-        "ok": not missing_required and not missing_any,
+    cli_runtime = _cli_runtime(rules.get("required_cli", []), env=env)
+    skill_presence = {
         "available": available,
+        "paths": {
+            canonical_name(name): str(path) for name, path in discovered.items()
+        },
         "missing_required": missing_required,
         "missing_any": missing_any,
         "optional_missing": optional_missing,
     }
-    if stage in {"visual", "visual-ian", "visual-structured"}:
+
+    result = {
+        "stage": stage,
+        "resolved_stage": resolved_stage,
+        "ok": not missing_required
+        and not missing_any
+        and not cli_runtime["missing_required"],
+        "available": available,
+        "missing_required": missing_required,
+        "missing_any": missing_any,
+        "optional_missing": optional_missing,
+        "skill_presence": skill_presence,
+        "cli_runtime": cli_runtime,
+    }
+    if resolved_stage in {"visual", "visual-ian", "visual-structured"}:
         result["runtime"] = _visual_runtime(discovered)
     return result
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", required=True, choices=STAGE_RULES)
+    parser.add_argument(
+        "--stage",
+        required=True,
+        choices=sorted(set(STAGE_RULES) | set(STAGE_ALIASES)),
+    )
     parser.add_argument("--root", action="append", type=Path, dest="roots")
     args = parser.parse_args(argv)
 
