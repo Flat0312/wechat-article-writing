@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0",
+  "fixture_kind": "offline-normalized-boundary",
+  "contracts": {
+    "cheat-on-content": {
+      "stage": "prediction-publish-retro",
+      "input": {
+        "root_skill": "cheat-on-content",
+        "content_form": "long-essay",
+        "routes": ["cheat-predict", "cheat-publish", "cheat-retro"]
+      },
+      "output": {
+        "status": "completed",
+        "paths": [
+          "prediction-input-reference.json",
+          "predictions/article-1.md",
+          "publish-reference.json",
+          "metrics.json",
+          "retro/article-1.md"
+        ],
+        "receipts": ["prediction", "publish", "retro"]
+      },
+      "form_receipt": {
+        "source": "cheat-on-content",
+        "root_skill_called": true,
+        "root_route": "cheat-init",
+        "root_call_status": "completed",
+        "target_project_binding": "primary",
+        "content_form": "long-essay",
+        "cheat_schema_version": "1.2",
+        "rubric_adapter": "wechat-long-essay-v1",
+        "rubric_status": "compatible",
+        "rubric_version": "v1",
+        "checked_at": "2026-08-05T15:00:00+08:00"
+      }
+    },
+    "creator-buddy": {
+      "stage": "topic",
+      "input": {
+        "lane": "creator-buddy-cross-platform",
+        "route_override": {
+          "provider": "xiaohongshu-skill",
+          "route": "local-playwright",
+          "allow_fallback": false
+        }
+      },
+      "output": {
+        "status": "completed",
+        "paths": ["research/creator-buddy-xhs.json", "research/sources.json"],
+        "provider": "xiaohongshu-skill"
+      }
+    },
+    "gzh-explosive-content-detector": {
+      "stage": "topic",
+      "input": {"lane": "gzh-explosive-content-detector", "keyword": "AI 编程"},
+      "output": {
+        "status": "completed",
+        "paths": ["research/gzh-trends.json", "research/gzh-trends.html"],
+        "source_urls_preserved": true
+      }
+    },
+    "aihot": {
+      "stage": "topic-ai",
+      "input": {"lane": "aihot", "window": "recent"},
+      "output": {"status": "completed", "paths": ["research/aihot.json"]}
+    },
+    "x-tweet-fetcher": {
+      "stage": "topic",
+      "input": {"lane": "x-tweet-fetcher", "mode": "url"},
+      "output": {"status": "completed", "paths": ["research/x-raw/post.json"]}
+    },
+    "khazix-writer": {
+      "stage": "writing",
+      "input": {"mode": "craft-only", "style_card_locked": true},
+      "output": {
+        "schema_version": "1.0",
+        "source_skill": "khazix-writer",
+        "mode": "craft-only",
+        "suggestions": [
+          {
+            "kind": "transition",
+            "section_ref": "section-2",
+            "text": "让转场由上一节的因果后果推动。"
+          }
+        ]
+      }
+    },
+    "humanizer-zh": {
+      "stage": "editing",
+      "input": {"mode": "diagnostic", "draft": "drafts/draft-v1.md"},
+      "output": {
+        "schema_version": "1.0",
+        "source_skill": "humanizer-zh",
+        "mode": "diagnostic",
+        "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "issues": [
+          {
+            "location": "paragraph:2",
+            "pattern": "mechanical transition",
+            "suggestion": "remove the connector and preserve the causal transition",
+            "scope": "local",
+            "adds_facts": false,
+            "changes_meaning": false,
+            "severity": "low"
+          }
+        ]
+      }
+    },
+    "guizang-social-card-skill": {
+      "stage": "cover",
+      "input": {"route": "guizang", "asset_contract": "one-static-21x9"},
+      "output": {"status": "completed", "paths": ["route-output/wechat-21x9-cover.png"]}
+    },
+    "ian-xiaohei-illustrations": {
+      "stage": "visual",
+      "input": {"route": "ian", "anchor_id": "anchor-emotion"},
+      "output": {
+        "status": "completed",
+        "paths": ["visuals/assets/ian/ian-anchor-emotion.png", "visuals/assets/manifest.json"]
+      }
+    },
+    "baoyu-article-illustrator": {
+      "stage": "visual",
+      "input": {"route": "baoyu", "anchor_id": "anchor-flow"},
+      "output": {
+        "status": "completed",
+        "paths": ["visuals/assets/baoyu/baoyu-anchor-flow.png", "visuals/assets/manifest.json"]
+      }
+    },
+    "gzh-design": {
+      "stage": "html",
+      "input": {"layout_contract": "wechat-layout-contract", "author_cta": "disabled"},
+      "output": {
+        "status": "completed",
+        "paths": [
+          "output/article.html",
+          "output/article-preview.html",
+          "output/article-copy.html",
+          "output/article-copy-preview.html",
+          "output/html-qc.md"
+        ],
+        "author_cta": "disabled"
+      }
+    }
+  }
+}
