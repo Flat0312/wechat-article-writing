@@ -219,7 +219,7 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 保留五类总控确认：账号配置、选题角度、大纲事实边界、最终正文、视觉交付。视觉交付包含出图前的视觉计划确认和排版后的 HTML 确认。
 
-最终正文确认必须绑定当前 `final` 产物 SHA256。预测前确认 `approvals.final.artifact_sha256 == artifacts.final.sha256`；缺失或不匹配时重新展示当前全文并取得确认。预测版本只能由真实 Cheat 调用产生，旧版本不可覆盖。
+最终正文确认必须绑定当前 `final` 产物 SHA256。预测前确认 `approvals.final.artifact_sha256 == artifacts.final.sha256`；缺失或不匹配时重新展示当前全文并取得确认。预测版本只能由真实 Cheat 调用产生，旧版本不可覆盖。根 Cheat 返回 blind JSON 后，先按 `references/blind-score-contract.md` 运行总控适配器校验 rubric 版本、7/9 维集合、字段和 script hash，再允许根路由计算 composite；失败时停止，不补维度、不猜版本。
 
 外部 Skill 的硬性确认继续有效。选择 `baoyu-article-illustrator` 后，按其流程确认图片类型、密度、风格、配色和语言。快速模式也不得跳过事实关卡、Cheat 协议、头图与正文配图计划确认或 HTML 校验。
 

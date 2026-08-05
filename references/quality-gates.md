@@ -67,6 +67,20 @@ adapter is the only supported copy from `drafts/final.md` into Cheat's
 before any snapshot is written. `prediction-input-reference.json` is only an
 input receipt and never substitutes for the real `cheat-predict` call.
 
+When the root Cheat route returns a Channel B JSON response, validate it before
+the parent route calculates `composite` or writes prediction data:
+
+```text
+python <SKILL_ROOT>/scripts/blind_score_adapter.py validate <BLIND_JSON> <RUBRIC_NOTES> --script <CHEAT_PROJECT>/scripts/<id>.md
+```
+
+The validator derives `rubric_version` and the exact 7/9 dimension set from the
+current rubric, checks every per-dimension field, and optionally recomputes the
+12-character script hash prefix. A failure is a prediction gate failure; do not
+fill missing dimensions, accept a different rubric version, or calculate a
+composite from an unvalidated response. See
+[`references/blind-score-contract.md`](blind-score-contract.md).
+
 Before any formal prediction, shadow prediction, or public release, lock exactly one
 `primary_action`: `approval`, `forwarding`, `saving`, or `discussion`. The
 `prediction-reference.json` receipt MUST record `primary_action`, `locked_at`, and the current
