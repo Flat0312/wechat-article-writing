@@ -139,6 +139,10 @@ HTML completion requires all five non-empty files:
 
 Treat `output/article-copy.html` as the manual-paste artifact recorded by
 `artifacts.html.path`. Missing any file blocks HTML completion and `html_ready`.
+The repository validator also requires all five files to contain non-whitespace UTF-8
+text, a `<section>...</section>` pair in `article.html`, the expected HTML/copy controls
+in `article-copy-preview.html`, and a Markdown heading, `output/article.html` reference,
+and validation record in `html-qc.md`.
 
 Open `output/article-preview.html` in a browser and inspect at least one narrow viewport no wider than 390 CSS pixels and one regular-width viewport at least 900 CSS pixels wide. At both widths, verify that all images load, text and controls do not overlap, no content is clipped, and there is no unintended horizontal overflow.
 

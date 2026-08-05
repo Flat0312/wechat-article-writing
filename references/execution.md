@@ -246,13 +246,37 @@ HTML 阶段必须同时保留：
 4. `output/article-copy-preview.html`
 5. `output/html-qc.md`
 
-其中 `article-copy.html` 是人工粘贴交付物，`artifacts.html.path` 必须指向它。
-`gzh-design` 生成预览页后，运行
-`python scripts/upgrade_preview_copy.py <output/article-copy-preview.html>`，把复制按钮
-加固为显式 `text/html` 剪贴板写入并保留旧式复制作为回退，同时把本地图片内嵌到复制
-载荷。随后必须静态确认复制 HTML 中没有 `../visuals/...` 图片路径，再实际点击该按钮
-并粘贴检查；只检查干净 HTML 文件不能替代剪贴板门禁。把窄/宽视口、图片加载、
-复制方法、粘贴目标和 pasted DOM 结果写入 `output/html-qc.md`。
+`gzh-design` 的默认文件名（`{原文件名}_排版_{主题}.html` 和
+`{原文件名}_预览.html`）不属于文章项目 schema。总控必须把它返回的纯
+`<section>...</section>` 正文按下面的固定映射落盘；不得把默认命名直接登记为项目产物：
+
+1. 将 `gzh-design` 的干净 section 写入绝对路径
+   `<PROJECT_ROOT>/output/article.html`，并运行 `gzh-design` 的 HTML 校验。
+2. 原样复制 `output/article.html` 为 `output/article-copy.html`；后者是人工粘贴
+   交付物，`artifacts.html.path` 必须指向它。不要把预览外壳复制到该文件。
+3. 用总控随附脚本分别生成两个预览壳：
+
+   ```text
+   python <SKILL_ROOT>/scripts/wrap_preview.py <PROJECT_ROOT>/output/article.html <PROJECT_ROOT>/output/article-preview.html
+   python <SKILL_ROOT>/scripts/wrap_preview.py <PROJECT_ROOT>/output/article-copy.html <PROJECT_ROOT>/output/article-copy-preview.html
+   ```
+
+4. 只对 `output/article-copy-preview.html` 运行：
+
+   ```text
+   python <SKILL_ROOT>/scripts/upgrade_preview_copy.py <PROJECT_ROOT>/output/article-copy-preview.html
+   ```
+
+   该步骤把复制按钮加固为显式 `text/html` 剪贴板写入并保留旧式复制作为回退，
+   同时把本地图片内嵌到复制载荷。随后必须静态确认复制 HTML 中没有
+   `../visuals/...` 图片路径，再实际点击该按钮并粘贴检查；只检查干净 HTML 文件
+   不能替代剪贴板门禁。
+5. 按 `assets/article-project-template/output/html-qc.template.md` 生成并填写
+   `<PROJECT_ROOT>/output/html-qc.md`。它必须记录五件套、gzh-design 调用、窄/宽
+   视口、图片加载、复制方法、粘贴目标、pasted DOM 和九项排版检查结果。
+
+每一步都使用实际的绝对 `<SKILL_ROOT>` 与 `<PROJECT_ROOT>`；文件完成前运行
+`python <SKILL_ROOT>/scripts/validate_project.py article <PROJECT_ROOT>`。
 
 ## 失败与恢复
 

@@ -52,6 +52,19 @@ HTML_DELIVERY_FILES = (
     "output/article-copy-preview.html",
     "output/html-qc.md",
 )
+HTML_MINIMUM_MARKERS = {
+    "output/article.html": ("<section", "</section>"),
+    "output/article-copy-preview.html": (
+        "<html",
+        'id="gzh-content"',
+        "gzhCopyBtn",
+        "</body>",
+    ),
+}
+HTML_QC_HEADING_RE = re.compile(r"(?m)^\s*#{1,6}\s+\S")
+HTML_QC_VERIFICATION_RE = re.compile(
+    r"(?im)^\s*(?:[-*]\s*)?.*(?:validate_project|验证|校验|validation).*$"
+)
 FORBIDDEN_KEY_PARTS = (
     "secret",
     "token",
@@ -516,11 +529,48 @@ def validate_article_project(root: Path) -> list[str]:
         or (isinstance(artifacts, dict) and "html" in artifacts)
     )
     if html_status != "completed" and html_work_started:
+        html_contents: dict[str, str] = {}
         for relative in HTML_DELIVERY_FILES:
             target = root.joinpath(*PurePosixPath(relative).parts)
             if not target.is_file():
                 errors.append(
                     f"{relative}: missing required HTML delivery file"
+                )
+                continue
+            try:
+                content = target.read_text(encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                errors.append(f"{relative}: must be valid UTF-8 text")
+                continue
+            if not content.strip():
+                errors.append(
+                    f"{relative}: required HTML delivery file must be non-empty"
+                )
+                continue
+            html_contents[relative] = content
+        for relative, markers in HTML_MINIMUM_MARKERS.items():
+            content = html_contents.get(relative)
+            if content is None:
+                continue
+            lowered = content.lower()
+            for marker in markers:
+                if marker.lower() not in lowered:
+                    errors.append(
+                        f"{relative}: missing required marker {marker}"
+                    )
+        qc_content = html_contents.get("output/html-qc.md")
+        if qc_content is not None:
+            if not HTML_QC_HEADING_RE.search(qc_content):
+                errors.append(
+                    "output/html-qc.md: must contain a Markdown heading"
+                )
+            if "output/article.html" not in qc_content:
+                errors.append(
+                    "output/html-qc.md: must reference output/article.html"
+                )
+            if not HTML_QC_VERIFICATION_RE.search(qc_content):
+                errors.append(
+                    "output/html-qc.md: must contain a validation record"
                 )
     errors.extend(_json_safety_errors(state))
     return errors

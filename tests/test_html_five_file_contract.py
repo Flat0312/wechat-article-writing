@@ -55,12 +55,32 @@ class HtmlFiveFileContractTests(unittest.TestCase):
         )
 
     def _write_html_files(self, *, omit: str | None = None) -> None:
+        payloads = {
+            "output/article.html": (
+                '<section><p><span leaf="">正文</span></p></section>\n'
+            ),
+            "output/article-preview.html": (
+                '<html><body><div id="gzh-content">正文</div></body></html>\n'
+            ),
+            "output/article-copy.html": (
+                '<section><p><span leaf="">正文</span></p></section>\n'
+            ),
+            "output/article-copy-preview.html": (
+                '<html><body><div id="gzh-content">正文</div>'
+                '<button id="gzhCopyBtn">复制</button></body></html>\n'
+            ),
+            "output/html-qc.md": (
+                "# HTML QC\n\n"
+                "output/article.html\n\n"
+                "- validate_project: 通过\n"
+            ),
+        }
         for relative in validate_project.HTML_DELIVERY_FILES:
             if relative == omit:
                 continue
             target = self.project.joinpath(*Path(relative).parts)
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text("verified\n", encoding="utf-8")
+            target.write_text(payloads[relative], encoding="utf-8")
 
     def test_new_html_work_reports_missing_copy_preview(self):
         self._write_state()
@@ -92,6 +112,34 @@ class HtmlFiveFileContractTests(unittest.TestCase):
         self.assertEqual(
             validate_project.validate_article_project(self.project),
             [],
+        )
+
+    def test_zero_byte_delivery_file_is_rejected(self):
+        self._write_state()
+        self._write_html_files()
+        (self.project / "output" / "article-copy.html").write_bytes(b"")
+
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [
+                "output/article-copy.html: "
+                "required HTML delivery file must be non-empty"
+            ],
+        )
+
+    def test_article_html_minimum_structure_is_required(self):
+        self._write_state()
+        self._write_html_files()
+        (self.project / "output" / "article.html").write_text(
+            "<p>not a section</p>\n", encoding="utf-8"
+        )
+
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [
+                "output/article.html: missing required marker <section",
+                "output/article.html: missing required marker </section>",
+            ],
         )
 
 
@@ -126,7 +174,11 @@ def run_reverse_demo() -> int:
             fixture.project
             / "output"
             / "article-copy-preview.html"
-        ).write_text("verified\n", encoding="utf-8")
+        ).write_text(
+            '<html><body><div id="gzh-content">正文</div>'
+            '<button id="gzhCopyBtn">复制</button></body></html>\n',
+            encoding="utf-8",
+        )
         green = subprocess.run(
             command,
             text=True,
