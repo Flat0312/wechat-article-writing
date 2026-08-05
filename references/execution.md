@@ -198,7 +198,7 @@ python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>
 
 进入选题阶段时先运行 `python <SKILL_ROOT>/scripts/dependency_check.py --stage topic`；AI 账号或 AI 主题改用 `python <SKILL_ROOT>/scripts/dependency_check.py --stage topic-ai`。随后严格按 [`references/topic-signal-registry.md`](topic-signal-registry.md) 和 `references/skill-routing.md` 的 topic signal orchestration 执行：
 
-1. 按 registry 运行 `creator-buddy-cross-platform` 和显式的 `gzh-explosive-content-detector` lane；小红书关键词热度优先走本机 `xiaohongshu-skill`（Playwright 扫码登录、免费、无需 API Key），只有详情、评论或博主作品分析才走 Agent Reach 路线。
+1. 按 registry 运行 `creator-buddy-cross-platform` 和显式的 `gzh-explosive-content-detector` lane；调用 creator-buddy 时必须附带 [`references/creator-buddy-wechat-override.md`](creator-buddy-wechat-override.md) 的 route override。小红书关键词热度必须走本机 `xiaohongshu-skill`（Playwright 扫码登录、免费、无需 API Key），不得静默降级到 xhs-hotnotes、Agent Reach、global-content-search、RedFox、socialdatax 或 Guaikei；只有已登记关键词热度后，详情、评论或博主作品分析才走 creator-buddy 的其他路线。
 2. AI 账号或 AI 主题运行 `aihot` lane，其他主题把该 lane 记为 `not_applicable`；保留原文 URL，摘要只用于发现候选，不能替代事实核查。
 3. 运行 `x-tweet-fetcher` lane，按 registry 保存原始输出和来源登记。
 4. 调用根 `cheat-on-content` 路由到 `cheat-trends` lane，按账号启用的热点适配器补充综合热榜信号；它负责补充、去重和粗筛，不替代其他信号或最终 Cheat 推荐。

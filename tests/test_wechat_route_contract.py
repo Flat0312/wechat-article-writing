@@ -56,6 +56,23 @@ class WeChatRouteContractTests(unittest.TestCase):
         self.assertIn('creator-buddy', text)
         self.assertIn('generic-keyword confirmation rule', text)
 
+    def test_creator_buddy_xiaohongshu_route_is_explicitly_overridden(self):
+        override = (
+            SKILL_ROOT
+            / "references"
+            / "creator-buddy-wechat-override.md"
+        ).read_text(encoding="utf-8")
+        for required in (
+            '"provider": "xiaohongshu-skill"',
+            '"route": "local-playwright"',
+            '"allow_fallback": false',
+            'status` may be `completed`, `missing`, or `blocked`',
+        ):
+            self.assertIn(required, override)
+        self.assertIn('creator-buddy-wechat-override.md', self.routing)
+        self.assertIn('必须附带', (SKILL_ROOT / "references" / "execution.md").read_text(encoding="utf-8"))
+        self.assertIn('MUST use the local `xiaohongshu-skill`', self.routing)
+
     def test_skill_routing_describes_excluded_capabilities(self):
         excluded = (
             'hv-analysis',
