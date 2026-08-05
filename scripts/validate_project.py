@@ -65,6 +65,14 @@ HTML_QC_HEADING_RE = re.compile(r"(?m)^\s*#{1,6}\s+\S")
 HTML_QC_VERIFICATION_RE = re.compile(
     r"(?im)^\s*(?:[-*]\s*)?.*(?:validate_project|验证|校验|validation).*$"
 )
+HTML_QC_AUTHOR_CTA_RE = re.compile(
+    r"(?im)^\s*(?:[-*]\s*)?author_cta\s*:\s*(disabled|explicit)\s*$"
+)
+HTML_AUTHOR_PLACEHOLDER_RE = re.compile(r"\{\{\s*(?:作者名|简介)\s*\}\}")
+HTML_DEFAULT_CTA_MARKERS = (
+    "点赞、在看、转发",
+    "如果你觉得今天这篇有收获",
+)
 FORBIDDEN_KEY_PARTS = (
     "secret",
     "token",
@@ -659,6 +667,25 @@ def validate_article_project(root: Path) -> list[str]:
                 errors.append(
                     "output/html-qc.md: must contain a validation record"
                 )
+            cta_match = HTML_QC_AUTHOR_CTA_RE.search(qc_content)
+            if cta_match is None:
+                errors.append(
+                    "output/html-qc.md: must record author_cta: disabled or author_cta: explicit"
+                )
+            elif cta_match.group(1) == "disabled":
+                for relative in (
+                    "output/article.html",
+                    "output/article-copy.html",
+                ):
+                    content = html_contents.get(relative, "")
+                    if HTML_AUTHOR_PLACEHOLDER_RE.search(content):
+                        errors.append(
+                            f"{relative}: author placeholders are forbidden when author_cta is disabled"
+                        )
+                    if any(marker in content for marker in HTML_DEFAULT_CTA_MARKERS):
+                        errors.append(
+                            f"{relative}: gzh-design default author CTA is forbidden when author_cta is disabled"
+                        )
     errors.extend(_json_safety_errors(state))
     return errors
 

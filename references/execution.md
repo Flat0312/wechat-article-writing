@@ -250,7 +250,9 @@ python <SKILL_ROOT>/scripts/visual_asset_adapter.py body <PROJECT_ROOT> --route 
 
 选择 Baoyu 轨道时，先运行 `python <SKILL_ROOT>/scripts/baoyu_adapter.py prepare <文章目录>`，只把 `visuals/assets/baoyu/source.md` 交给根 Skill；结束后运行 `python <SKILL_ROOT>/scripts/baoyu_adapter.py verify <文章目录>`，确保已批准的 `drafts/final.md` 没有被改写。
 
-`gzh-design` 是 HTML 完成的必经路线。调用时必须把
+`gzh-design` 是 HTML 完成的必经路线。调用时必须按
+[`references/gzh-design-author-cta.md`](gzh-design-author-cta.md) 显式传入
+`author_cta: disabled` 或 `author_cta: explicit`，并把实际结果登记到 QC；还必须把
 `references/wechat-layout-contract.md` 的 8 条契约（3 文本级 + 5 视觉级）作为
 高于主题配方和默认智能处理的硬约束传入。还要运行文章
 验证器。HTML 预览必须分别在 <=390 CSS px 和 >=900 CSS px 两种视口检查。还要把

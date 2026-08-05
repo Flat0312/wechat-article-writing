@@ -146,7 +146,7 @@ Before selecting the Baoyu route, the final text MUST be recorded and approved a
 
 ## HTML gate
 
-Invoke root `gzh-design` with the 微信长文排版契约 above as an explicit hard constraint. Use WeChat-compatible inline styles. Verify every image reference, image dimension, and required asset. Run the repository article validator and clear every mandatory validator error; also clear every mandatory `gzh-design` error.
+Invoke root `gzh-design` with the 微信长文排版契约 above as an explicit hard constraint and the [`references/gzh-design-author-cta.md`](gzh-design-author-cta.md) CTA policy. Use WeChat-compatible inline styles. Verify every image reference, image dimension, and required asset. Run the repository article validator and clear every mandatory validator error; also clear every mandatory `gzh-design` error. When no user author block or CTA preference exists, record `author_cta: disabled` and remove the default signature/CTA; otherwise record `author_cta: explicit` with the user-provided text.
 
 HTML completion requires all five non-empty files:
 

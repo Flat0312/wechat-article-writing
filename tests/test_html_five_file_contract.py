@@ -73,6 +73,7 @@ class HtmlFiveFileContractTests(unittest.TestCase):
                 "# HTML QC\n\n"
                 "output/article.html\n\n"
                 "- validate_project: 通过\n"
+                "- author_cta: disabled\n"
             ),
         }
         for relative in validate_project.HTML_DELIVERY_FILES:
@@ -141,6 +142,59 @@ class HtmlFiveFileContractTests(unittest.TestCase):
                 "output/article.html: missing required marker </section>",
             ],
         )
+
+    def test_author_cta_policy_must_be_recorded(self):
+        self._write_state()
+        self._write_html_files()
+        qc = self.project / "output" / "html-qc.md"
+        qc.write_text(
+            qc.read_text(encoding="utf-8").replace("- author_cta: disabled\n", ""),
+            encoding="utf-8",
+        )
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [
+                "output/html-qc.md: must record author_cta: disabled or author_cta: explicit"
+            ],
+        )
+
+    def test_disabled_author_cta_rejects_gzh_placeholders_and_default_copy(self):
+        self._write_state()
+        self._write_html_files()
+        (self.project / "output" / "article.html").write_text(
+            '<section><p><span leaf="">{{作者名}}</span></p>'
+            '<p><span leaf="">点赞、在看、转发</span></p></section>\n',
+            encoding="utf-8",
+        )
+        (self.project / "output" / "article-copy.html").write_text(
+            '<section><p><span leaf="">{{简介}}</span></p></section>\n',
+            encoding="utf-8",
+        )
+        self.assertEqual(
+            validate_project.validate_article_project(self.project),
+            [
+                "output/article.html: author placeholders are forbidden when author_cta is disabled",
+                "output/article.html: gzh-design default author CTA is forbidden when author_cta is disabled",
+                "output/article-copy.html: author placeholders are forbidden when author_cta is disabled",
+            ],
+        )
+
+    def test_explicit_author_cta_is_allowed_when_recorded(self):
+        self._write_state()
+        self._write_html_files()
+        qc = self.project / "output" / "html-qc.md"
+        qc.write_text(
+            qc.read_text(encoding="utf-8").replace(
+                "- author_cta: disabled", "- author_cta: explicit"
+            ),
+            encoding="utf-8",
+        )
+        (self.project / "output" / "article.html").write_text(
+            '<section><p><span leaf="">我是作者，欢迎点赞、在看、转发。</span></p>'
+            '</section>\n',
+            encoding="utf-8",
+        )
+        self.assertEqual(validate_project.validate_article_project(self.project), [])
 
 
 def run_reverse_demo() -> int:

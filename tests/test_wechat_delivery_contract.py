@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import unittest
+import sys
 
 from pathlib import Path
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL_ROOT / 'scripts'))
 
 
 class WeChatDeliveryContractTests(unittest.TestCase):
@@ -50,6 +52,15 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         self.assertIn('references/wechat-layout-contract.md', quality)
         # execution.md 仍要记录"9 项排版检查"到 html-qc
         self.assertIn('九项排版检查', execution)
+
+    def test_gzh_design_author_cta_policy_is_explicit(self):
+        cta = (SKILL_ROOT / 'references' / 'gzh-design-author-cta.md').read_text(encoding='utf-8')
+        quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
+        execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
+        for required in ('author_cta: disabled', 'author_cta: explicit', '{{作者名}}', '{{简介}}'):
+            self.assertIn(required, cta)
+        self.assertIn('gzh-design-author-cta.md', quality)
+        self.assertIn('gzh-design-author-cta.md', execution)
 
     def test_publish_dependency_no_longer_discovers_draft_adapter(self):
         import dependency_check
