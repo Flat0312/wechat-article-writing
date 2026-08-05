@@ -10,7 +10,7 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 2. 先核查事实，再编辑文风；不得新增用户未提供的经历、数字、案例或立场。
 3. 导入账号先预览，默认只读；不得读取或复制认证目录、Cookie、密钥和缓存。
 4. 每个阶段更新 `article-state.json`。上游产物变化时先按恢复协议传播 `stale` 并持久化，再继续下游。
-5. 微信封面只生成一张 `21:9` 头图，不生成 `1:1` 分享卡。封面合成与文字排版走 `guizang-social-card-skill`；照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时，才允许 ImageGen 端到端生成整张封面（路由兜底）。两种兜底都必须显式标注。正文配图按单个认知锚点选择单一路线：隐喻、情绪、叙事转折和身份表达走 Ian；有序步骤、层级、对比、矩阵、时间线、精确标签和证据数值走 `baoyu-article-illustrator`。同一锚点不得默认双轨生成，除非用户明确要求 A/B。HTML 排版走 `gzh-design` 时必须把 [`references/wechat-layout-contract.md`](references/wechat-layout-contract.md) 的 8 条契约（3 文本级 + 5 视觉级）作为不可选的上位约束传入；主题组件与契约冲突时省略该组件或改用更简洁的兼容组件。
+5. 微信封面只生成一张 `21:9` 头图，不生成 `1:1` 分享卡。封面合成与文字排版走 `guizang-social-card-skill`；照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时，才允许 ImageGen 端到端生成整张封面（路由兜底）。两种兜底都必须显式标注。正文配图按单个认知锚点选择单一路线：隐喻、情绪、叙事转折和身份表达走 Ian；有序步骤、层级、对比、矩阵、时间线、精确标签和证据数值走 `baoyu-article-illustrator`。同一锚点不得默认双轨生成，除非用户明确要求 A/B。所有视觉成品必须经 `scripts/visual_asset_adapter.py` 收回 `visuals/assets/` 并登记 `visuals/assets/manifest.json`；外部默认输出目录只作 provenance。HTML 排版走 `gzh-design` 时必须把 [`references/wechat-layout-contract.md`](references/wechat-layout-contract.md) 的 8 条契约（3 文本级 + 5 视觉级）作为不可选的上位约束传入；主题组件与契约冲突时省略该组件或改用更简洁的兼容组件。
 6. 发布只采用人工复制已验证 HTML 的路线；不得调用 `wechat-publisher`、其他草稿箱上传适配器或自动发布接口。
 7. 未通过事实、视觉或 HTML 强制关卡时，不得声称完整交付。
 8. 第三方 Skill 是运行时依赖；不得把它们复制或 vendoring 到本 Skill。

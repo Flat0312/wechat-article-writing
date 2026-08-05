@@ -82,6 +82,12 @@ Run `dependency_check.py --stage cover`, then invoke root `guizang-social-card-s
 - Record title, material source, layout intent, output path, dimensions, and verification result in `visual-plan.md`.
 - Account visual rules outrank automatic style suggestions.
 
+After the external route returns, the total Skill must run
+`scripts/visual_asset_adapter.py cover` with the route output directory. Only its
+`visuals/assets/cover.<ext>` copy and the shared `visuals/assets/manifest.json` are
+deliverables; a square/pair/Live Photo companion or a non-`21:9` source fails the
+cover route.
+
 Fallback: when suitable photo material is missing, ImageGen may generate the base photo while guizang still composes the typography (material fallback). Only when guizang itself is unavailable may ImageGen produce the entire cover end to end (route fallback). The same one-asset contract applies in both cases, and the fallback must be explicitly flagged in `visual-plan.md` and the delivery notes.
 
 Having no available cover route blocks visual completion. Do not silently replace it with a body-illustration or generic image route, and do not silently fall back without flagging it.
@@ -96,6 +102,11 @@ For every body cognitive anchor, record route and reason in `visual-plan.md`.
 - If both jobs matter independently, split them into two anchors. Do not generate both routes for one anchor unless the user explicitly requests A/B.
 - If a passage has no independent information job, create no body image for it.
 - Profile visual rules outrank automatic recommendations.
+
+After Ian or Baoyu returns, run `scripts/visual_asset_adapter.py body` for every
+selected anchor. The adapter is the only accepted copy into
+`visuals/assets/ian/` or `visuals/assets/baoyu/`, and its manifest record must
+include the route, anchor, information job, dimensions, and SHA256.
 
 Run `dependency_check.py --stage visual` before planning. Then run the matching route preflight for each selected anchor: `visual-ian` for Ian, `visual-structured` for Baoyu. Treat `optional_missing: ["imagegen"]` as an informational hint and let the selected route resolve the actual runtime image backend. A missing route Skill or a route that cannot resolve any backend blocks that asset; do not silently substitute a route that changes the information job.
 

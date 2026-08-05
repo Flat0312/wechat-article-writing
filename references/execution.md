@@ -184,7 +184,7 @@ python scripts/validate_project.py profile <账号目录>
 | 审校 | 事实核查、结构、账号适配、文笔终检；`humanizer-zh` 只作可选 AI 痕迹诊断 | `drafts/final.md` |
 | 终稿观察 | 持续学习启用时，终稿批准并锁定 SHA256 后提炼 0–5 条跨篇候选，写入观察账本；不改变正文、审批或预测 | `account-profile/history/voice-observations/` |
 | 预测 | 先运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，再调用根 Cheat 的 predict | `prediction-input-reference.json` + Cheat 预测引用 |
-| 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
+| 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图，并由总控适配器统一收回 | `visuals/visual-plan.md`、`visuals/assets/manifest.json`、`visuals/assets/` |
 | 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、`output/article-preview.html`、`output/article-copy.html`、`output/article-copy-preview.html`、`output/html-qc.md` |
 | 发布 | 人工复制已验证 HTML；用户确认公开后先真实调用 Cheat publish，再运行总控发布桥写入回执 | `publish.json` + `publish-reference.json` |
 | 复盘 | 公开发布后把人工 WeChat 数据写入 `metrics.json`，再调用 Cheat 回收和演化 | `metrics.json` + Cheat 复盘引用 |
@@ -225,9 +225,24 @@ Cheat 路由包括 init、seed、recommend、score、predict、publish、retro�
 
 ## 视觉与 HTML
 
-在 `visuals/visual-plan.md` 分开记录封面与正文配图计划。封面调用根 `guizang-social-card-skill`，显式覆盖其默认封面对输出：只生成 `.poster.wide` 对应的 `21:9` 主头图，不创建 `.poster.square`、`1:1` 分享卡或封面对预览。照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时，才允许 ImageGen 端到端生成整张封面（路由兜底）。两种兜底适用同一单图契约，并必须在 `visual-plan.md` 和交付说明中显式标注。生成后验证尺寸、标题可读性、主体裁切、素材来源和文件存在性。
+在 `visuals/visual-plan.md` 分开记录封面与正文配图计划。封面调用根 `guizang-social-card-skill`，显式覆盖其默认封面对输出：只生成 `.poster.wide` 对应的 `21:9` 主头图，不创建 `.poster.square`、`1:1` 分享卡或封面对预览。照片素材缺失时允许 ImageGen 生成底图、仍由 guizang 合成文字（素材兜底）；仅当 guizang 本身不可用时，才允许 ImageGen 端到端生成整张封面（路由兜底）。两种兜底适用同一单图契约，并必须在 `visual-plan.md` 和交付说明中显式标注。生成后先把外部 route 输出目录和选定源文件交给总控适配器：
 
-正文每个认知锚点只选一条轨道：情绪、观点、身份、叙事转折或原创隐喻走 Ian；流程、层级、对比、矩阵、架构、时间线、精确标签或有证据的数据走 `baoyu-article-illustrator`。无独立信息任务的段落不配图。同一锚点除非用户明确要求 A/B，不重复生成两套。
+```text
+python <SKILL_ROOT>/scripts/visual_asset_adapter.py cover <PROJECT_ROOT> --route guizang --source <GUIZANG_OUTPUT>/wechat-21x9-cover.png --route-output-dir <GUIZANG_OUTPUT>
+```
+
+适配器要求 route 目录恰好有一个静态位图，检查精确 `21:9`，并拒绝 square、pair、carousel、Live Photo 和视频文件；失败即判 Guizang 路线不可用，按上面规则切换到标注过的 ImageGen 路由，不能静默丢弃外部产物。适配成功后交付文件固定在 `visuals/assets/cover.<ext>`，并写入 `visuals/assets/manifest.json`。
+
+正文每个认知锚点只选一条轨道：情绪、观点、身份、叙事转折或原创隐喻走 Ian；流程、层级、对比、矩阵、架构、时间线、精确标签或有证据的数据走 `baoyu-article-illustrator`。无独立信息任务的段落不配图。同一锚点除非用户明确要求 A/B，不重复生成两套。外部成品不能直接作为文章交付路径；每个选定锚点都要用总控适配器登记：
+
+```text
+python <SKILL_ROOT>/scripts/visual_asset_adapter.py body <PROJECT_ROOT> --route ian --source <IAN_OUTPUT>/anchor-emotion.png --anchor-id anchor-emotion --information-job "narrative tension" --provenance-ref <IAN_OUTPUT_REF>
+python <SKILL_ROOT>/scripts/visual_asset_adapter.py body <PROJECT_ROOT> --route baoyu --source <BAOYU_OUTPUT>/anchor-flow.png --anchor-id anchor-flow --information-job "ordered steps" --provenance-ref <BAOYU_OUTPUT_REF>
+```
+
+适配器把两条路线统一收回 `visuals/assets/ian/` 或 `visuals/assets/baoyu/`，并在同一个 `visuals/assets/manifest.json` 中记录路线、锚点、信息任务、尺寸、SHA256 和可选 provenance。完成全部选定资产后，用
+`python <SKILL_ROOT>/scripts/article_state.py record <PROJECT_ROOT> --role visuals --path visuals/assets/manifest.json`
+把 manifest 纳入文章状态。
 
 选择 Baoyu 轨道时，先运行 `python scripts/baoyu_adapter.py prepare <文章目录>`，只把 `visuals/assets/baoyu/source.md` 交给根 Skill；结束后运行 `python scripts/baoyu_adapter.py verify <文章目录>`，确保已批准的 `drafts/final.md` 没有被改写。
 

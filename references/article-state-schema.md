@@ -63,6 +63,11 @@ path MUST be `output/article-copy.html`. The associated HTML contract also retai
 `output/html-qc.md`; the validator enforces the five-file contract for current work while
 preserving completed historical projects.
 
+For visual completion, `artifacts.visuals.path` should be
+`visuals/assets/manifest.json`. The manifest is the canonical article-local index
+for the one cover and selected body assets; external Skill output directories are
+provenance only.
+
 Article bodies and credentials are never embedded in state. Cheat prediction and retro files remain in the Cheat project and are referenced through the logical binding.
 
 ## Approval rules
