@@ -66,6 +66,11 @@ If one signal provider fails, report its missing route or runtime requirement an
 - Rubric change: `cheat-bump`.
 - Progress: `cheat-status`.
 
+`cheat-seed` has an external generic-`humanizer` naming mismatch. Apply the
+[`cheat-seed-compatibility.md`](cheat-seed-compatibility.md) register: the
+total-control route only recognizes `humanizer-zh`, never installs a generic
+replacement, and never treats seed output as an editing diagnostic.
+
 For `content_form=long-essay`, prediction additionally requires the total-control
 [`cheat-form-contract.md`](cheat-form-contract.md) receipt. A completed root
 Cheat call and a compatible WeChat long-essay rubric are separate statuses;

@@ -6,7 +6,8 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 ## 核心规则
 
 1. 涉及账号初始化、对标学习、选题决策、评分、预测、发布登记、复盘、画像、rubric 或 Cheat schema 迁移时，必须真实调用 `cheat-on-content` 根 Skill。不得模拟其子流程或复制其公式。
- 相关子路由包括 `cheat-learn-from`、`cheat-status`、`cheat-migrate`；账号导入必须先完成 `cheat-status`，schema 不兼容时取得单独确认后再执行迁移，迁移后仍需取得兼容的 `cheat-status` 结果并按 [`references/cheat-status-receipt.md`](references/cheat-status-receipt.md) 写入 `cheat-status-receipt.json` 回执。
+相关子路由包括 `cheat-learn-from`、`cheat-status`、`cheat-migrate`；账号导入必须先完成 `cheat-status`，schema 不兼容时取得单独确认后再执行迁移，迁移后仍需取得兼容的 `cheat-status` 结果并按 [`references/cheat-status-receipt.md`](references/cheat-status-receipt.md) 写入 `cheat-status-receipt.json` 回执。
+ `cheat-seed` 内部若出现泛名 `humanizer`，按 [`references/cheat-seed-compatibility.md`](references/cheat-seed-compatibility.md) 登记外部不一致；不得安装或模拟该泛名 Skill。
 2. 先核查事实，再编辑文风；不得新增用户未提供的经历、数字、案例或立场。
 3. 导入账号先预览，默认只读；不得读取或复制认证目录、Cookie、密钥和缓存。
 4. 每个阶段更新 `article-state.json`。上游产物变化时先按恢复协议传播 `stale` 并持久化，再继续下游。

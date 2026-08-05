@@ -158,6 +158,19 @@ class WeChatRouteContractTests(unittest.TestCase):
         self.assertIn("cheat-form-receipt.json", bridge)
         self.assertIn("rubric_status=compatible", quality)
 
+    def test_cheat_seed_generic_humanizer_mismatch_is_registered(self):
+        register = (
+            SKILL_ROOT / "references" / "cheat-seed-compatibility.md"
+        ).read_text(encoding="utf-8")
+        for required in (
+            "generic `humanizer`",
+            "humanizer-zh",
+            "Do not install, discover, or invoke a second",
+            "cannot replace",
+        ):
+            self.assertIn(required, register)
+        self.assertIn("cheat-seed-compatibility.md", self.routing)
+
     def test_topic_signal_registry_is_the_five_lane_source_of_truth(self):
         registry = (
             SKILL_ROOT / "references" / "topic-signal-registry.md"
