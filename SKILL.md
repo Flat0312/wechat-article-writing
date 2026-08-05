@@ -18,7 +18,7 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 10. 只有长期账号且用户明确要求学习改稿或持续进化时，才调用 `wechat-style-learning`。持续学习启用后，每篇已批准终稿自动写入 `history/voice-observations/` 作为软观察；正式 draft/final 学习和硬规则晋级仍须遵守候选预览与确认边界，并且只影响后续文章。
 11. 中长文与资讯贴图的选题统一按 [`references/topic-signal-registry.md`](references/topic-signal-registry.md) 汇聚五路信号（五个已登记 lane）：`creator-buddy-cross-platform`、`gzh-explosive-content-detector`、AI 主题条件路由 `aihot`、`x-tweet-fetcher` 和 `cheat-trends`。小红书关键词热度走本机 `xiaohongshu-skill`；公众号分支若判定为通用关键词，必须先取得用户确认的扩展选择。非 AI 主题把 `aihot` 记为 `not_applicable`，不得用模型记忆补位。五路候选归一化、去重并保留来源后，必须交给根 `cheat-on-content` 评分和决策，再由用户确认选题角度。
 12. Cheat 子路由按公众号场景裁剪：`cheat-shoot` 只服务视频拍摄登记，不调用；`cheat-trends` 只负责补充、去重和粗筛热点候选，不替代 `creator-buddy`、公众号爆款或 `aihot`，也不替代最终的 Cheat 推荐；`cheat-score-blind` 只能由 Cheat 的 score、predict 或 bump 流程内部调用。
-13. 文章绑定标准长期账号画像时，在大纲和初稿前读取 `voice.md` 与 `content-patterns.md`。将 `voice.md` 和已验证规则作为作者声音的硬约束，将待验证规则作为可选实验；事实、证据、用户明确提供的经历、观点和当篇要求高于任何文风规则，不得为套用文风新增素材。先按 `outline.md` 的“文风执行卡”锁定你的声音，再调用 `khazix-writer` 作为必需的技法辅助，最后由本 Skill 完成融合起草与审校。卡兹克只能提供结构、节奏、场景、类比和自检建议，不得带入其作者身份、口癖、粗口、固定标点、固定结构或固定结尾。
+13. 文章绑定标准长期账号画像时，在大纲和初稿前读取 `voice.md` 与 `content-patterns.md`。将 `voice.md` 和已验证规则作为作者声音的硬约束，将待验证规则作为可选实验；事实、证据、用户明确提供的经历、观点和当篇要求高于任何文风规则，不得为套用文风新增素材。先按 `outline.md` 的“文风执行卡”锁定你的声音，再按 [`references/khazix-craft-contract.md`](references/khazix-craft-contract.md) 调用 `khazix-writer` 作为必需的技法辅助并通过 `craft_only_adapter.py`，最后由本 Skill 完成融合起草与审校。卡兹克只能提供结构、节奏、场景、类比和自检建议，不得带入其作者身份、口癖、粗口、固定标点、固定结构或固定结尾。
 14. `content_kind=news-card` 的资讯贴图与 long-essay 同级：同样进入发布登记、盲预测与复盘闭环；但走独立轻量建档分支，不进入 long-essay 的 12 阶段 `article-state.json`，也不参与 long-essay v1 正式预测或 rubric 变更流程。发布与数据单独记录；校准使用独立的 news-card 池，不得与 long-essay v1 校准池混池，试运行期不得进入 `wechat-style-learning`。进入贴图流程前先运行 `python <SKILL_ROOT>/scripts/dependency_check.py --stage news-card`；AI 账号或 AI 主题改用 `--stage news-card-ai`。贴图卡图走 guizang 合成（首选）或 imagegen 端到端兜底（与 long-essay 头图相同的 `21:9` 单图契约），不进入 long-essay 的 Ian/Baoyu 正文配图轨道，也不要求 `gzh-design` HTML 门禁（贴图直接交付图片）。
 15. 资讯贴图素材抓取使用本机 `x-tweet-fetcher`（`C:\Users\33158\.codex\tools\x-tweet-fetcher`，虚拟环境 `\.venv\Scripts\xtf.exe`）：
     - `--url <推文链接>`：抓单条推文（含推文内嵌长文全文），零依赖，无需登录。
@@ -30,7 +30,7 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
     - 读取帖子详情与评论（含长文正文）：`python -m scripts feed <feed_id> <xsec_token> --load-comments`。
     - 不使用红狐 key（REDFOX_API_KEY），也不把 RedFox/socialdatax/怪壳当作默认路线；这些外部 Key 未配置或余额不足时不得报错终止，直接改用本技能。
     抓取结果以 JSON/Markdown 存入 `news-cards/<slug>/research/`，链接必须原样保留 `xsec_token`，来源逐条登记进 `research/sources.json`。
-17. 长文起草与审校必须读取 `references/writing-style.md`。先完成事实与结构，再做文笔、账号文风和去 AI 痕迹检查；`humanizer-zh` 只可作为可选诊断参考，其输出不得整篇覆盖正文、注入未经用户提供的个性细节，或削弱已确认的账号声音。持续学习启用时，最终正文批准且 SHA256 锁定后，调用 `wechat-style-learning` 的 `observe-final` 记录跨篇候选。
+17. 长文起草与审校必须读取 `references/writing-style.md`。先完成事实与结构，再做文笔、账号文风和去 AI 痕迹检查；`humanizer-zh` 只可按 [`references/humanizer-diagnostic-contract.md`](references/humanizer-diagnostic-contract.md) 作为可选诊断参考并通过 `humanizer_diagnostic_adapter.py`，其输出不得整篇覆盖正文、注入未经用户提供的个性细节，或削弱已确认的账号声音。持续学习启用时，最终正文批准且 SHA256 锁定后，调用 `wechat-style-learning` 的 `observe-final` 记录跨篇候选。
 
 ## 执行手册
 

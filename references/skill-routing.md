@@ -12,8 +12,8 @@
 | `aihot` | Current AI news | Invoke for AI accounts or AI topics |
 | `x-tweet-fetcher` | X/Twitter tweets, threads, long-form articles, and timeline signals via local CLI (no API key) | Mandatory X lane for topic discovery on both long essays and news cards |
 | `wechat-article-writing` | First-party drafting, account voice, prose execution and final style gate | Mandatory owner of article drafting; read `references/writing-style.md` |
-| `khazix-writer` | Required craft assistant | Must participate after the style card is locked; never the author voice and never import persona, signature, quota or fixed mannerism |
-| `humanizer-zh` | Optional AI-pattern diagnostic | Run only after facts, structure and account voice stabilize; accept suggestions selectively and never replace the whole draft |
+| `khazix-writer` | Required craft assistant | Must participate after the style card is locked under [`khazix-craft-contract.md`](khazix-craft-contract.md); never the author voice and never import persona, signature, quota or fixed mannerism |
+| `humanizer-zh` | Optional AI-pattern diagnostic | Run only after facts, structure and account voice stabilize under [`humanizer-diagnostic-contract.md`](humanizer-diagnostic-contract.md); accept local suggestions selectively and never replace the whole draft |
 | `wechat-content-strategy` | Evidence-bound content enhancement, outline, writing parameters, style card and editing anchors | Mandatory after topic/evidence and before first-party drafting |
 | `wechat-style-learning` | Confirmed edit learning for long-term profiles | Invoke only on an explicit learn-from-edits request and persist only after confirmation |
 | `guizang-social-card-skill` | One 21:9 WeChat main cover | Preferred cover route; explicitly suppress its default 1:1 pair output; ImageGen fallback allowed under cover routing rules |

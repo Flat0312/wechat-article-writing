@@ -182,9 +182,9 @@ python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>
 | 选题 | 按 [`references/topic-signal-registry.md`](topic-signal-registry.md) 执行五个信号 lane（`aihot` 按适用性标记） -> 候选归一化、去重、保留来源 -> 根 Cheat 评分与决策 -> 用户确认角度 | `topic-brief.md` + Cheat 引用 |
 | 调研 | 核查当前事实和原始来源 | `research/evidence.md`、`research/sources.json` |
 | 大纲 | 调用 `wechat-content-strategy`，从已核验材料选择一种内容增强策略，确定中心论点、文章级写作参数、文风执行卡、结构、证据位置和编辑锚点 | `outline.md` |
-| 技法辅助 | 在文风执行卡锁定后调用 `khazix-writer`，只获取结构、场景、类比、节奏和自检建议 | 辅助结果，不直接作为正文 |
+| 技法辅助 | 在文风执行卡锁定后按 [`references/khazix-craft-contract.md`](khazix-craft-contract.md) 调用 `khazix-writer`，只获取结构、场景、类比、节奏和自检建议，并运行 `craft_only_adapter.py` | 辅助结果，不直接作为正文 |
 | 初稿 | 由本 Skill 按文风执行卡融合用户声音与兼容技法，生成初稿；不得让卡兹克默认人格覆盖账号规则 | `drafts/draft-v1.md` |
-| 审校 | 事实核查、结构、账号适配、文笔终检；`humanizer-zh` 只作可选 AI 痕迹诊断 | `drafts/final.md` |
+| 审校 | 事实核查、结构、账号适配、文笔终检；按 [`references/humanizer-diagnostic-contract.md`](humanizer-diagnostic-contract.md) 将 `humanizer-zh` 限制为可选 AI 痕迹诊断 | `drafts/final.md` |
 | 终稿观察 | 持续学习启用时，终稿批准并锁定 SHA256 后提炼 0–5 条跨篇候选，写入观察账本；不改变正文、审批或预测 | `account-profile/history/voice-observations/` |
 | 预测 | 先运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，再调用根 Cheat 的 predict | `prediction-input-reference.json` + Cheat 预测引用 |
 | 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图，并由总控适配器统一收回 | `visuals/visual-plan.md`、`visuals/assets/manifest.json`、`visuals/assets/` |
