@@ -218,7 +218,8 @@ class TopicDependencyTests(unittest.TestCase):
         )
         self.assertFalse(result["ok"])
         self.assertEqual(
-            result["missing_required"], ["cheat-trends", "gzh-explosive-content-detector"]
+            result["missing_required"],
+            ["cheat-trends", "gzh-explosive-content-detector", "xiaohongshu-skill"],
         )
 
     def test_standard_topic_passes_with_all_required_lanes(self):
@@ -229,6 +230,7 @@ class TopicDependencyTests(unittest.TestCase):
                 "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
+                "xiaohongshu-skill",
             ),
         )
         self.assertTrue(result["ok"])
@@ -242,6 +244,7 @@ class TopicDependencyTests(unittest.TestCase):
                 "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
+                "xiaohongshu-skill",
             ),
         )
         self.assertFalse(result["ok"])

@@ -24,6 +24,9 @@
 
 `guizang-social-card-skill` owns cover composition and typography. This orchestrator overrides its general WeChat pair default: generate only the `21:9` main cover, with no `1:1` sharing card, pair preview, carousel, or Live Photo. When suitable photo material is missing, ImageGen may generate the base photo while guizang still composes the typography (material fallback); only when guizang itself is unavailable may ImageGen produce the entire cover end to end (route fallback). Every fallback must be explicitly flagged in the delivery notes and in `visual-plan.md`. Body illustrations remain a separate Ian/Baoyu pipeline.
 
+The lane names, applicability, statuses and candidate fields below are
+single-sourced in [`topic-signal-registry.md`](topic-signal-registry.md).
+
 ## Intentionally excluded Cheat routes
 
 Do not invoke `cheat-shoot` or `cheat-score-blind` directly from this orchestrator. `cheat-shoot` only belongs to video shooting registration; `cheat-score-blind` must only be invoked internally by Cheat's score, predict, or bump workflow. Topic discovery must invoke root `cheat-on-content` and let it route to `cheat-trends` as the fifth signal lane. Do not simulate these actions from this Skill.
@@ -36,14 +39,14 @@ Do not register or call `hv-analysis`, `space-chart-image`, `article-batch-illus
 
 Run topic discovery as a fan-in pipeline. Signal providers never make the final topic decision.
 
-1. Invoke root `creator-buddy` for cross-platform signals. For Xiaohongshu keyword heat, prefer the local `xiaohongshu-skill` route (Playwright, free, no API key); use `global-content-search` and Agent Reach only when note details, comments, or creator history are needed.
-2. In the same `creator-buddy` run, explicitly invoke `gzh-explosive-content-detector` for recent WeChat viral samples. If it classifies the input as a generic keyword, stop and obtain the required expansion choice before continuing the pipeline.
-3. For an AI account or AI-related topic, also invoke root `aihot` for current AI signals. Preserve every original URL and treat generated summaries as discovery aids, not verified evidence.
-4. For long essays and news cards alike, also collect X signals with the local `x-tweet-fetcher` CLI: relevant users' timelines, search results, threads, and long-form articles. Save raw output under `news-cards/<slug>/research/x-raw/` (news cards) or the article research folder (long essays), and register each source in the corresponding `sources.json`.
-5. Invoke root `cheat-on-content` and let it route to `cheat-trends`, using the account's enabled adapters to add broad trend signals. Treat adapter overlap with `aihot` or `creator-buddy` as duplicate coverage, not independent confirmation.
-6. Normalize and deduplicate all returned items before the final Cheat recommendation. Each candidate MUST retain `title`, `source`, `snapshot_text`, `snapshot_at`, and `url` when available. Merge cross-platform coverage of the same event into one candidate while retaining all source records; repeated coverage is not independent confirmation.
+1. Run the `creator-buddy-cross-platform` lane through root `creator-buddy`. For Xiaohongshu keyword heat, prefer the local `xiaohongshu-skill` route (Playwright, free, no API key); use `global-content-search` and Agent Reach only when note details, comments, or creator history are needed.
+2. In the same `creator-buddy` run, explicitly run the `gzh-explosive-content-detector` lane for recent WeChat viral samples. If it classifies the input as a generic keyword, stop and obtain the required expansion choice before continuing the pipeline.
+3. For an AI account or AI-related topic, run the `aihot` lane. For other topics, record `not_applicable`; preserve every original URL and treat generated summaries as discovery aids, not verified evidence.
+4. Run the `x-tweet-fetcher` lane for long essays and news cards alike: relevant users' timelines, search results, threads, and long-form articles. Save raw output under `news-cards/<slug>/research/x-raw/` (news cards) or the article research folder (long essays), and register each source in the corresponding `sources.json`.
+5. Invoke root `cheat-on-content` and let it route to the `cheat-trends` lane, using the account's enabled adapters to add broad trend signals. Treat adapter overlap with `aihot` or `creator-buddy` as duplicate coverage, not independent confirmation.
+6. Normalize and deduplicate all five registered lanes before the final Cheat recommendation. Each candidate MUST retain `title`, `source`, `snapshot_text`, `snapshot_at`, and `url` when available. Merge cross-platform coverage of the same event into one candidate while retaining all source records; repeated coverage is not independent confirmation.
 7. Submit the normalized pool to root `cheat-on-content`. Use `cheat-recommend` for a populated candidate pool, `cheat-score` for an existing topic or draft, and `cheat-seed` only when no topic or usable pool exists. Cheat owns scoring and ranking.
-8. Show Cheat's scored recommendation, rationale, anchors, risks, and retained source provenance. The topic stage remains `awaiting_confirmation` until the user confirms the topic angle.
+8. Show Cheat's scored recommendation, rationale, anchors, risks, retained source provenance and all five lane statuses. The topic stage remains `awaiting_confirmation` until the user confirms the topic angle.
 
 If one signal provider fails, report its missing route or runtime requirement and keep its lane visibly incomplete. Do not fabricate results, silently substitute model memory, or present a partial pool as the full set of applicable signal lanes.
 
@@ -74,7 +77,7 @@ Every init, seed, recommend, score, predict, publish, retro, persona, bump, lear
 
 ## WeChat cover routing
 
-Run `dependency_check.py --stage cover`, then invoke root `guizang-social-card-skill` with an explicit one-asset contract:
+Run `python <SKILL_ROOT>/scripts/dependency_check.py --stage cover`, then invoke root `guizang-social-card-skill` with an explicit one-asset contract:
 
 - Produce exactly one static `21:9` WeChat main cover.
 - Use the full or near-full article title and one strong visual relationship.
@@ -108,7 +111,7 @@ selected anchor. The adapter is the only accepted copy into
 `visuals/assets/ian/` or `visuals/assets/baoyu/`, and its manifest record must
 include the route, anchor, information job, dimensions, and SHA256.
 
-Run `dependency_check.py --stage visual` before planning. Then run the matching route preflight for each selected anchor: `visual-ian` for Ian, `visual-structured` for Baoyu. Treat `optional_missing: ["imagegen"]` as an informational hint and let the selected route resolve the actual runtime image backend. A missing route Skill or a route that cannot resolve any backend blocks that asset; do not silently substitute a route that changes the information job.
+Run `python <SKILL_ROOT>/scripts/dependency_check.py --stage visual` before planning. Then run the matching route preflight for each selected anchor: `visual-ian` for Ian, `visual-structured` for Baoyu. Treat `optional_missing: ["imagegen"]` as an informational hint and let the selected route resolve the actual runtime image backend. A missing route Skill or a route that cannot resolve any backend blocks that asset; do not silently substitute a route that changes the information job.
 
 ## HTML completion gate
 

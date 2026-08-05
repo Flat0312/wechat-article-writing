@@ -179,7 +179,7 @@ python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>
 | 阶段 | 动作 | 产物或真实来源 |
 |---|---|---|
 | 简报 | 明确主题、受众、观点、材料、字数和时效 | `brief.md` |
-| 选题 | `creator-buddy` 跨平台信号 + 显式公众号爆款分支 + AI 主题的 `aihot` -> 候选归一化、去重、保留来源 -> 根 Cheat 评分与决策 -> 用户确认角度 | `topic-brief.md` + Cheat 引用 |
+| 选题 | 按 [`references/topic-signal-registry.md`](topic-signal-registry.md) 执行五个信号 lane（`aihot` 按适用性标记） -> 候选归一化、去重、保留来源 -> 根 Cheat 评分与决策 -> 用户确认角度 | `topic-brief.md` + Cheat 引用 |
 | 调研 | 核查当前事实和原始来源 | `research/evidence.md`、`research/sources.json` |
 | 大纲 | 调用 `wechat-content-strategy`，从已核验材料选择一种内容增强策略，确定中心论点、文章级写作参数、文风执行卡、结构、证据位置和编辑锚点 | `outline.md` |
 | 技法辅助 | 在文风执行卡锁定后调用 `khazix-writer`，只获取结构、场景、类比、节奏和自检建议 | 辅助结果，不直接作为正文 |
@@ -196,16 +196,17 @@ python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>
 
 ### 选题信号汇聚
 
-进入选题阶段时先运行 `dependency_check.py --stage topic`；AI 账号或 AI 主题改用 `--stage topic-ai`。随后严格按 `references/skill-routing.md` 的 topic signal orchestration 执行：
+进入选题阶段时先运行 `python <SKILL_ROOT>/scripts/dependency_check.py --stage topic`；AI 账号或 AI 主题改用 `python <SKILL_ROOT>/scripts/dependency_check.py --stage topic-ai`。随后严格按 [`references/topic-signal-registry.md`](topic-signal-registry.md) 和 `references/skill-routing.md` 的 topic signal orchestration 执行：
 
-1. 根 `creator-buddy` 收集跨平台信号，并在公众号选题中显式路由 `gzh-explosive-content-detector`；小红书关键词热度优先走本机 `xiaohongshu-skill`（Playwright 扫码登录、免费、无需 API Key），只有详情、评论或博主作品分析才走 Agent Reach 路线。
-2. AI 账号或 AI 主题同时调用根 `aihot`，保留原文 URL；它的摘要只用于发现候选，不能替代事实核查。
-3. 调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号启用的热点适配器补充综合热榜信号；它负责补充、去重和粗筛，不替代前三路。
-4. 把四路结果归一化为候选池。每条至少记录标题、来源、可打分的内容快照、抓取时间和可用的原始链接；同一事件跨平台重复出现时合并为一个候选，并保留全部来源，不把重复转述当成多份独立证据。
-5. 将候选池交给根 `cheat-on-content`：已有候选池走 recommend，已有主题或初稿走 score，没有主题且没有可用候选才走 seed。不得由信号 Skill 或本 Skill 自行替代 Cheat 排名。
-6. 在 `topic-brief.md` 展示数据源状态、归一化候选、去重说明、Cheat 评分引用与推荐理由；用户确认选题角度前，topic 阶段保持 `awaiting_confirmation`。
+1. 按 registry 运行 `creator-buddy-cross-platform` 和显式的 `gzh-explosive-content-detector` lane；小红书关键词热度优先走本机 `xiaohongshu-skill`（Playwright 扫码登录、免费、无需 API Key），只有详情、评论或博主作品分析才走 Agent Reach 路线。
+2. AI 账号或 AI 主题运行 `aihot` lane，其他主题把该 lane 记为 `not_applicable`；保留原文 URL，摘要只用于发现候选，不能替代事实核查。
+3. 运行 `x-tweet-fetcher` lane，按 registry 保存原始输出和来源登记。
+4. 调用根 `cheat-on-content` 路由到 `cheat-trends` lane，按账号启用的热点适配器补充综合热榜信号；它负责补充、去重和粗筛，不替代其他信号或最终 Cheat 推荐。
+5. 把五个已登记 lane 的结果和状态归一化为候选池。每条至少记录标题、来源、可打分的内容快照、抓取时间和可用的原始链接；同一事件跨平台重复出现时合并为一个候选，并保留全部来源，不把重复转述当成多份独立证据。
+6. 将候选池交给根 `cheat-on-content`：已有候选池走 recommend，已有主题或初稿走 score，没有主题且没有可用候选才走 seed。不得由信号 Skill 或本 Skill 自行替代 Cheat 排名。
+7. 在 `topic-brief.md` 展示五个 lane 的数据源状态、归一化候选、去重说明、Cheat 评分引用与推荐理由；用户确认选题角度前，topic 阶段保持 `awaiting_confirmation`。
 
-`gzh-explosive-content-detector` 识别到泛词时，必须遵守它的强制等待规则：先让用户选择拓展或不拓展，再继续抓取、汇聚和 Cheat 决策。任一信号源不可用时如实标记该路缺失，不得用模型记忆补造，也不得把不完整候选池描述为完整四路扫描。
+`gzh-explosive-content-detector` 识别到泛词时，必须遵守它的强制等待规则：先让用户选择拓展或不拓展，再继续抓取、汇聚和 Cheat 决策。任一信号源不可用时如实标记该 lane 缺失，不得用模型记忆补造，也不得把不完整候选池描述为完整适用信号集合。
 
 ### 内容策略与改稿学习路由
 

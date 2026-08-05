@@ -5,13 +5,15 @@
 - 账号或主题类型：AI / 非 AI
 - 关键词与时间窗：
 
-## 数据源状态
+## 数据源状态（定义见 `references/topic-signal-registry.md`）
 
 | 信号路线 | 状态 | 查询范围或缺失原因 | 产物引用 |
 |---|---|---|---|
-| creator-buddy 跨平台信号 | pending | | |
-| gzh-explosive-content-detector 公众号爆款 | pending | | |
-| aihot AI 时效信号（仅 AI 主题） | skipped | | |
+| creator-buddy-cross-platform | pending | | |
+| gzh-explosive-content-detector | pending | | |
+| aihot（仅 AI 主题） | not_applicable | | |
+| x-tweet-fetcher | pending | | |
+| cheat-trends | pending | | |
 
 ## 归一化候选池
 

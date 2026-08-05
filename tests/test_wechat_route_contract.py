@@ -121,6 +121,38 @@ class WeChatRouteContractTests(unittest.TestCase):
         ):
             self.assertIn(field, receipt)
 
+    def test_topic_signal_registry_is_the_five_lane_source_of_truth(self):
+        registry = (
+            SKILL_ROOT / "references" / "topic-signal-registry.md"
+        ).read_text(encoding="utf-8")
+        execution = (SKILL_ROOT / "references" / "execution.md").read_text(
+            encoding="utf-8"
+        )
+        quality = (SKILL_ROOT / "references" / "quality-gates.md").read_text(
+            encoding="utf-8"
+        )
+        template = (
+            SKILL_ROOT / "assets" / "article-project-template" / "topic-brief.md"
+        ).read_text(encoding="utf-8")
+        lanes = (
+            "creator-buddy-cross-platform",
+            "gzh-explosive-content-detector",
+            "aihot",
+            "x-tweet-fetcher",
+            "cheat-trends",
+        )
+        for lane in lanes:
+            self.assertIn(lane, registry)
+            self.assertIn(lane, execution)
+            self.assertIn(lane, self.routing)
+            self.assertIn(lane, self.skill)
+            self.assertIn(lane, template)
+        self.assertIn("topic-signal-registry.md", execution)
+        self.assertIn("topic-signal-registry.md", quality)
+        self.assertNotIn("四路", execution)
+        self.assertNotIn("前三路", execution)
+        self.assertIn("not_applicable", registry)
+
 
 if __name__ == '__main__':
     unittest.main()
