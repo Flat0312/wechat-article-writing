@@ -22,3 +22,9 @@ Do not infer `publicly_published` from HTML delivery, elapsed time, a screenshot
 The transition to `publicly_published` MUST invoke root `cheat-on-content` and use its `cheat-publish` route. Do not simulate registration or reproduce the protocol. Do not mark the publish workflow stage `completed` until that mandatory call succeeds.
 
 If the article is already public but Cheat is missing or registration fails, keep `publish.json.status` truthfully set to `publicly_published`, set `article-state.json.stage_status.publish` to `failed`, report the blocker, and retry only the Cheat registration during recovery. Never upload, republish, or modify the public article from this workflow.
+
+After a successful root `cheat-publish`, pass its normalized receipt to
+[`references/wechat-publish-bridge.md`](wechat-publish-bridge.md). The bridge
+writes `publish.json`, records its SHA256 in `publish-reference.json` and the
+article state's `publish` artifact, and fixes the WeChat retro input at
+`metrics.json`. It does not call any upload or publishing API.

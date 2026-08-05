@@ -186,8 +186,8 @@ python scripts/validate_project.py profile <账号目录>
 | 预测 | 先运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，再调用根 Cheat 的 predict | `prediction-input-reference.json` + Cheat 预测引用 |
 | 视觉 | Guizang 合成唯一一张 `21:9` 微信头图（素材缺失时 ImageGen 出底图、guizang 仍合成文字；仅 guizang 不可用时 ImageGen 端到端兜底，兜底显式标注）；Ian/Baoyu 按认知锚点生成正文配图 | `visuals/visual-plan.md`、`visuals/assets/` |
 | 排版 | 调用 `gzh-design` 并清零强制错误 | `output/article.html`、`output/article-preview.html`、`output/article-copy.html`、`output/article-copy-preview.html`、`output/html-qc.md` |
-| 发布 | 人工复制已验证 HTML；公开后由用户确认并登记 Cheat | `publish.json` |
-| 复盘 | 公开发布后调用 Cheat 回收和演化 | Cheat 复盘引用 |
+| 发布 | 人工复制已验证 HTML；用户确认公开后先真实调用 Cheat publish，再运行总控发布桥写入回执 | `publish.json` + `publish-reference.json` |
+| 复盘 | 公开发布后把人工 WeChat 数据写入 `metrics.json`，再调用 Cheat 回收和演化 | `metrics.json` + Cheat 复盘引用 |
 
 Cheat 路由包括 init、seed、recommend、score、predict、publish、retro、persona、bump 和 status；每次都调用根 `cheat-on-content`，由它选择内部流程。
 

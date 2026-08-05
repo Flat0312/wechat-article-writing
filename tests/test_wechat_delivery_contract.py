@@ -67,6 +67,16 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         self.assertIn('input receipt', quality)
         self.assertIn('哈希绑定的只读 Cheat 输入', execution)
 
+    def test_wechat_publish_bridge_and_metrics_contract_are_declared(self):
+        bridge = (SKILL_ROOT / 'references' / 'wechat-publish-bridge.md').read_text(encoding='utf-8')
+        publishing = (SKILL_ROOT / 'references' / 'publishing.md').read_text(encoding='utf-8')
+        execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
+        for field in ('publish_json_sha256', 'public_url', 'cheat_prediction_file', 'platform', 'metrics.json'):
+            self.assertIn(field, bridge)
+        self.assertIn('wechat_publish_bridge.py', bridge)
+        self.assertIn('After a successful root `cheat-publish`', publishing)
+        self.assertIn('publish-reference.json', execution)
+
     def test_body_illustration_preflight_accepts_either_complete_route(self):
         import dependency_check
 
