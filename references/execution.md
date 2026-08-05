@@ -59,7 +59,7 @@ python <SKILL_ROOT>/scripts/dependency_check.py --stage retro
 
 ### 依赖缺失处理
 
-检查返回 `ok: false` 时，按 `missing_required` 或 `missing_any` 列表给出具体安装指引，不要只报错。常见缺失与安装命令：
+检查返回 `ok: false` 时，按 `missing_required`、`missing_any`、`script_runtime.missing_required` 或 `cli_runtime.missing_required` 列表给出具体安装指引，不要只报错。`skill_presence` 只说明 frontmatter Skill 是否被发现；`script_runtime` 单独说明脚本入口、语法和 Python import/version；`cli_runtime` 单独说明外部命令及其解析路径。三类结果都要保留在阶段回执中，不能用 Skill 目录存在覆盖 runtime 失败。常见缺失与安装命令：
 
 | 缺失 Skill | 安装命令（对用户说） |
 |---|---|

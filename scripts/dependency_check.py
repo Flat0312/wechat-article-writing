@@ -1,4 +1,7 @@
 import argparse
+import ast
+import importlib.metadata
+import importlib.util
 import json
 import os
 import re
@@ -24,6 +27,33 @@ CLI_RULES = {
     "x-tweet-fetcher": {
         "env": ("X_TWEET_FETCHER_BIN", "XTF_BIN"),
         "commands": ("xtf", "xtf.exe", "x-tweet-fetcher"),
+    },
+}
+
+SCRIPT_RUNTIME_RULES = {
+    "topic": {
+        "gzh-explosive-content-detector": {
+            "imports": {"requests": "2.28.0"},
+            "scripts": ("scripts/fetch_gzh_trends.py",),
+        }
+    },
+    "topic-ai": {
+        "gzh-explosive-content-detector": {
+            "imports": {"requests": "2.28.0"},
+            "scripts": ("scripts/fetch_gzh_trends.py",),
+        }
+    },
+    "news-card": {
+        "gzh-explosive-content-detector": {
+            "imports": {"requests": "2.28.0"},
+            "scripts": ("scripts/fetch_gzh_trends.py",),
+        }
+    },
+    "news-card-ai": {
+        "gzh-explosive-content-detector": {
+            "imports": {"requests": "2.28.0"},
+            "scripts": ("scripts/fetch_gzh_trends.py",),
+        }
     },
 }
 
@@ -265,6 +295,95 @@ def _cli_runtime(required_cli, env=None):
     }
 
 
+def _version_tuple(value):
+    numbers = re.findall(r"\d+", str(value))
+    return tuple(int(number) for number in numbers[:4])
+
+
+def _import_runtime(module_name, minimum_version):
+    try:
+        spec = importlib.util.find_spec(module_name)
+    except (ImportError, AttributeError, ValueError):
+        spec = None
+    if spec is None:
+        return {
+            "ok": False,
+            "module": module_name,
+            "required_version": minimum_version,
+            "installed_version": None,
+            "reason": "module_missing",
+        }
+    try:
+        installed_version = importlib.metadata.version(module_name)
+    except importlib.metadata.PackageNotFoundError:
+        installed_version = None
+    if installed_version is None:
+        return {
+            "ok": True,
+            "module": module_name,
+            "required_version": minimum_version,
+            "installed_version": None,
+            "reason": "importable_version_unreported",
+        }
+    return {
+        "ok": _version_tuple(installed_version) >= _version_tuple(minimum_version),
+        "module": module_name,
+        "required_version": minimum_version,
+        "installed_version": installed_version,
+        "reason": "ok"
+        if _version_tuple(installed_version) >= _version_tuple(minimum_version)
+        else "version_too_old",
+    }
+
+
+def _script_runtime(stage, discovered):
+    requirements = SCRIPT_RUNTIME_RULES.get(stage, {})
+    checks = {}
+    missing_required = []
+    for skill_name, requirement in requirements.items():
+        root_value = discovered.get(skill_name)
+        root = Path(root_value).expanduser() if root_value is not None else None
+        imports = {
+            module: _import_runtime(module, minimum)
+            for module, minimum in requirement.get("imports", {}).items()
+        }
+        scripts = {}
+        source_status = "not_installed"
+        if root is not None and root.is_dir():
+            source_status = "ready"
+            for relative in requirement.get("scripts", ()):
+                script_path = root.joinpath(*relative.split("/"))
+                try:
+                    source = script_path.read_text(encoding="utf-8-sig")
+                    ast.parse(source, filename=str(script_path))
+                    scripts[relative] = {"ok": True, "syntax_ok": True}
+                except (OSError, UnicodeError, SyntaxError):
+                    scripts[relative] = {"ok": False, "syntax_ok": False}
+        elif root is not None:
+            source_status = "not_checked"
+        for module, result in imports.items():
+            if not result["ok"]:
+                missing_required.append(f"{skill_name}:{module}")
+        for relative, result in scripts.items():
+            if not result["ok"]:
+                missing_required.append(f"{skill_name}:{relative}")
+        if source_status == "not_installed" and skill_name in discovered:
+            source_status = "not_checked"
+        checks[skill_name] = {
+            "source_status": source_status,
+            "imports": imports,
+            "scripts": scripts,
+            "status": "missing" if any(
+                not result["ok"] for result in imports.values()
+            ) or any(not result["ok"] for result in scripts.values()) else source_status,
+        }
+    return {
+        "required": sorted(requirements),
+        "checks": checks,
+        "missing_required": missing_required,
+    }
+
+
 def check_dependencies(stage, discovered, env=None):
     resolved_stage = _resolve_stage(stage)
     if resolved_stage not in STAGE_RULES:
@@ -284,6 +403,7 @@ def check_dependencies(stage, discovered, env=None):
     optional_missing = [
         name for name in rules.get("optional", []) if name not in available_set
     ]
+    script_runtime = _script_runtime(resolved_stage, discovered)
     cli_runtime = _cli_runtime(rules.get("required_cli", []), env=env)
     skill_presence = {
         "available": available,
@@ -300,12 +420,14 @@ def check_dependencies(stage, discovered, env=None):
         "resolved_stage": resolved_stage,
         "ok": not missing_required
         and not missing_any
+        and not script_runtime["missing_required"]
         and not cli_runtime["missing_required"],
         "available": available,
         "missing_required": missing_required,
         "missing_any": missing_any,
         "optional_missing": optional_missing,
         "skill_presence": skill_presence,
+        "script_runtime": script_runtime,
         "cli_runtime": cli_runtime,
     }
     if resolved_stage in {"visual", "visual-ian", "visual-structured"}:

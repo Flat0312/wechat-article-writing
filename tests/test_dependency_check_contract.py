@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -86,6 +87,34 @@ class DependencyCheckContractTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["missing_required"], [])
         self.assertEqual(result["optional_missing"], [])
+        self.assertEqual(result["script_runtime"]["required"], [])
+        self.assertEqual(result["script_runtime"]["missing_required"], [])
+
+    def test_topic_reports_script_import_runtime_separately(self):
+        import dependency_check
+
+        discovered = self._discovered(
+            "cheat-on-content",
+            "cheat-trends",
+            "creator-buddy",
+            "gzh-explosive-content-detector",
+            "xiaohongshu-skill",
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with mock.patch.object(dependency_check.importlib.util, "find_spec", return_value=None):
+                result = dependency_check.check_dependencies(
+                    "topic", discovered, env=self._cli_env(tmpdir)
+                )
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["missing_required"], [])
+        self.assertEqual(result["cli_runtime"]["missing_required"], [])
+        self.assertIn(
+            "gzh-explosive-content-detector:requests",
+            result["script_runtime"]["missing_required"],
+        )
+        self.assertIn(
+            "requests", result["script_runtime"]["checks"]["gzh-explosive-content-detector"]["imports"]
+        )
 
     def test_visual_any_route_reports_missing_routes_and_generator(self):
         import dependency_check
