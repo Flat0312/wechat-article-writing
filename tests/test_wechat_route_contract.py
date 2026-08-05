@@ -72,6 +72,35 @@ class WeChatRouteContractTests(unittest.TestCase):
     def test_onboarding_import_does_not_preview_after_migration_without_status(self):
         self.assertIn('obtain a compatible `cheat-status` result', self.onboarding)
 
+    def test_execution_uses_absolute_skill_root_for_local_scripts(self):
+        execution = (SKILL_ROOT / "references" / "execution.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("python scripts/", execution)
+        self.assertIn("python <SKILL_ROOT>/scripts/dependency_check.py", execution)
+        self.assertIn("python -m scripts qrcode", execution)
+
+    def test_execution_lists_all_public_wechat_cheat_routes(self):
+        execution = (SKILL_ROOT / "references" / "execution.md").read_text(
+            encoding="utf-8"
+        )
+        routes = (
+            "cheat-init",
+            "cheat-learn-from",
+            "cheat-seed",
+            "cheat-recommend",
+            "cheat-score",
+            "cheat-predict",
+            "cheat-publish",
+            "cheat-retro",
+            "cheat-persona",
+            "cheat-bump",
+            "cheat-status",
+            "cheat-migrate",
+        )
+        for route in routes:
+            self.assertIn(route, execution)
+
 
 if __name__ == '__main__':
     unittest.main()

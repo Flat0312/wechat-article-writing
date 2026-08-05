@@ -39,22 +39,22 @@ description: Detailed execution runbook for dependency checks, project setup, ar
 将本 Skill 的绝对目录记为 `SKILL_ROOT`。所有 `scripts/` 和 `references/` 路径都相对 `SKILL_ROOT` 解析；执行时必须拼成绝对路径，不得依赖当前工作目录。按当前阶段运行：
 
 ```text
-python scripts/dependency_check.py --stage account
-python scripts/dependency_check.py --stage topic
-python scripts/dependency_check.py --stage topic-ai
-python scripts/dependency_check.py --stage news-card
-python scripts/dependency_check.py --stage news-card-ai
-python scripts/dependency_check.py --stage writing
-python scripts/dependency_check.py --stage strategy
-python scripts/dependency_check.py --stage editing
-python scripts/dependency_check.py --stage learning
-python scripts/dependency_check.py --stage cover
-python scripts/dependency_check.py --stage visual
-python scripts/dependency_check.py --stage visual-ian
-python scripts/dependency_check.py --stage visual-structured
-python scripts/dependency_check.py --stage html
-python scripts/dependency_check.py --stage publish
-python scripts/dependency_check.py --stage retro
+python <SKILL_ROOT>/scripts/dependency_check.py --stage account
+python <SKILL_ROOT>/scripts/dependency_check.py --stage topic
+python <SKILL_ROOT>/scripts/dependency_check.py --stage topic-ai
+python <SKILL_ROOT>/scripts/dependency_check.py --stage news-card
+python <SKILL_ROOT>/scripts/dependency_check.py --stage news-card-ai
+python <SKILL_ROOT>/scripts/dependency_check.py --stage writing
+python <SKILL_ROOT>/scripts/dependency_check.py --stage strategy
+python <SKILL_ROOT>/scripts/dependency_check.py --stage editing
+python <SKILL_ROOT>/scripts/dependency_check.py --stage learning
+python <SKILL_ROOT>/scripts/dependency_check.py --stage cover
+python <SKILL_ROOT>/scripts/dependency_check.py --stage visual
+python <SKILL_ROOT>/scripts/dependency_check.py --stage visual-ian
+python <SKILL_ROOT>/scripts/dependency_check.py --stage visual-structured
+python <SKILL_ROOT>/scripts/dependency_check.py --stage html
+python <SKILL_ROOT>/scripts/dependency_check.py --stage publish
+python <SKILL_ROOT>/scripts/dependency_check.py --stage retro
 ```
 
 ### 依赖缺失处理
@@ -88,8 +88,8 @@ python scripts/dependency_check.py --stage retro
 
 用户说「更新所有 skill」「更新依赖」「检查 skill 更新」时：
 
-1. 运行 `python scripts/dependency_check.py --stage account` 拿到已安装 skill 的路径列表（`available` 数组）。
-2. `dependency_check.py` 本身不输出路径。改用 `python scripts/dependency_check.py --stage html`，从 `available` 取到 skill 名，再按 Git 搜索逻辑找到每个 skill 的实际目录。更直接的方式：直接搜索各 runtime skills 目录下的 git 仓库。
+1. 运行 `python <SKILL_ROOT>/scripts/dependency_check.py --stage account` 拿到已安装 skill 的路径列表（`available` 数组）。
+2. `dependency_check.py` 本身不输出路径。改用 `python <SKILL_ROOT>/scripts/dependency_check.py --stage html`，从 `available` 取到 skill 名，再按 Git 搜索逻辑找到每个 skill 的实际目录。更直接的方式：直接搜索各 runtime skills 目录下的 git 仓库。
 3. 对每个 skill 目录执行：`git -C <目录> pull --ff-only 2>&1`。用 `--ff-only` 避免合并冲突意外改写本地文件。
 4. 汇总报告：
 
@@ -109,13 +109,13 @@ python scripts/dependency_check.py --stage retro
 
 ### 导入账号
 
-1. 如果目录已有标准 `account.json`，先运行 `python scripts/validate_project.py profile <账号目录>`；验证通过后直接使用，不重新导入。
-2. 否则运行 `python scripts/profile_adapter.py preview <源目录>`。
+1. 如果目录已有标准 `account.json`，先运行 `python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>`；验证通过后直接使用，不重新导入。
+2. 否则运行 `python <SKILL_ROOT>/scripts/profile_adapter.py preview <源目录>`。
 3. 检测到 Cheat 项目时，真实调用 `cheat-on-content` 检查状态和 schema 兼容性。
 4. schema 不兼容时停止只读导入，取得授权后才在源项目或工作副本迁移。
 5. 展示映射、缺失、冲突和排除项。
-6. 用户批准后运行 `python scripts/profile_adapter.py import <源目录> <账号目录> --approved`。
-7. 再运行 `validate_project.py profile` 验证结果。
+6. 用户批准后运行 `python <SKILL_ROOT>/scripts/profile_adapter.py import <源目录> <账号目录> --approved`。
+7. 再运行 `python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>` 验证结果。
 
 预览必须把会复制的 `mapped` 文档与保持在源项目中的 `live_linked` Cheat 来源分开展示。`.cheat-state.json`、rubric、候选池和预测记录通过本机 binding 实时解析，不复制成会漂移的快照。
 
@@ -126,8 +126,8 @@ python scripts/dependency_check.py --stage retro
 先调用 `cheat-on-content` 初始化 `long-essay` 项目并完成其全部问题。再按 `references/onboarding.md` 分组收集公众号定位、受众、文风、内容边界、对标和视觉偏好，只对缺失或矛盾字段逐项追问。用户确认画像后，运行：
 
 ```text
-python scripts/profile_adapter.py create <账号目录> --account-id <ID> --cheat-project <Cheat项目> --approved
-python scripts/validate_project.py profile <账号目录>
+python <SKILL_ROOT>/scripts/profile_adapter.py create <账号目录> --account-id <ID> --cheat-project <Cheat项目> --approved
+python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>
 ```
 
 把已确认答案写入对应 Markdown，再验证标准账号包。
@@ -154,13 +154,13 @@ python scripts/validate_project.py profile <账号目录>
 
 ### 单篇项目
 
-运行 `python scripts/article_state.py init <文章目录> --article-id <ID> --mode <full|fast|temporary>` 创建文章目录。字段、路径和真实来源遵循：
+运行 `python <SKILL_ROOT>/scripts/article_state.py init <文章目录> --article-id <ID> --mode <full|fast|temporary>` 创建文章目录。字段、路径和真实来源遵循：
 
 - `references/account-profile-schema.md`
 - `references/article-state-schema.md`
 - `references/recovery-rules.md`
 
-每次记录产物后运行 `python scripts/validate_project.py article <文章目录>`。
+每次记录产物后运行 `python <SKILL_ROOT>/scripts/validate_project.py article <文章目录>`。
 
 ## 第四步：执行文章流水线
 
@@ -189,7 +189,7 @@ python scripts/validate_project.py profile <账号目录>
 | 发布 | 人工复制已验证 HTML；用户确认公开后先真实调用 Cheat publish，再运行总控发布桥写入回执 | `publish.json` + `publish-reference.json` |
 | 复盘 | 公开发布后把人工 WeChat 数据写入 `metrics.json`，再调用 Cheat 回收和演化 | `metrics.json` + Cheat 复盘引用 |
 
-Cheat 路由包括 init、seed、recommend、score、predict、publish、retro、persona、bump 和 status；每次都调用根 `cheat-on-content`，由它选择内部流程。
+公众号适用 Cheat 路由共 12 条：`cheat-init`、`cheat-learn-from`、`cheat-seed`、`cheat-recommend`、`cheat-score`、`cheat-predict`、`cheat-publish`、`cheat-retro`、`cheat-persona`、`cheat-bump`、`cheat-status`、`cheat-migrate`。每次都调用根 `cheat-on-content`，由它选择内部流程；`cheat-shoot`、`cheat-trends` 和 `cheat-score-blind` 仍按路由契约排除或仅内部使用。
 
 ### 选题信号汇聚
 
@@ -244,7 +244,7 @@ python <SKILL_ROOT>/scripts/visual_asset_adapter.py body <PROJECT_ROOT> --route 
 `python <SKILL_ROOT>/scripts/article_state.py record <PROJECT_ROOT> --role visuals --path visuals/assets/manifest.json`
 把 manifest 纳入文章状态。
 
-选择 Baoyu 轨道时，先运行 `python scripts/baoyu_adapter.py prepare <文章目录>`，只把 `visuals/assets/baoyu/source.md` 交给根 Skill；结束后运行 `python scripts/baoyu_adapter.py verify <文章目录>`，确保已批准的 `drafts/final.md` 没有被改写。
+选择 Baoyu 轨道时，先运行 `python <SKILL_ROOT>/scripts/baoyu_adapter.py prepare <文章目录>`，只把 `visuals/assets/baoyu/source.md` 交给根 Skill；结束后运行 `python <SKILL_ROOT>/scripts/baoyu_adapter.py verify <文章目录>`，确保已批准的 `drafts/final.md` 没有被改写。
 
 `gzh-design` 是 HTML 完成的必经路线。调用时必须把
 `references/wechat-layout-contract.md` 的 8 条契约（3 文本级 + 5 视觉级）作为
@@ -295,7 +295,7 @@ HTML 阶段必须同时保留：
 
 ## 失败与恢复
 
-读取 `references/recovery-rules.md`。上游内容变化时找出最早变更阶段，运行 `python scripts/article_state.py invalidate <文章目录> --stage <阶段>` 并先持久化状态；不要用状态切换代替失效传播，也不要删除有效上游产物。
+读取 `references/recovery-rules.md`。上游内容变化时找出最早变更阶段，运行 `python <SKILL_ROOT>/scripts/article_state.py invalidate <文章目录> --stage <阶段>` 并先持久化状态；不要用状态切换代替失效传播，也不要删除有效上游产物。
 
 头图或正文配图失败时保留提示词和错误记录；HTML 失败时停止交付。恢复必须继续到所有受影响的下游 `stale` 项重新生成和验证。
 
