@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import unittest
+from hashlib import sha256
 from pathlib import Path
 
 
@@ -76,7 +77,7 @@ class ProjectSafetyTests(unittest.TestCase):
             'cheat_binding': 'primary',
             'current_stage': 'draft',
             'stage_status': {stage: 'pending' for stage in validate_project.STAGES},
-            'artifacts': {'final': {'path': 'generated/wechat/final.md', 'sha256': 'a' * 64}},
+            'artifacts': {'final': {'path': 'generated/wechat/final.md', 'sha256': sha256(b'final\r\n').hexdigest()}},
             'approvals': {},
             'skill_routes': {},
             'stale_artifacts': [],
@@ -101,7 +102,7 @@ class ProjectSafetyTests(unittest.TestCase):
             'cheat_binding': 'primary',
             'current_stage': 'ghost',
             'stage_status': {**{stage: 'pending' for stage in validate_project.STAGES}, 'brief': 'soon'},
-            'artifacts': {'final': {'path': 'generated/wechat/final.md', 'sha256': 'a' * 64}},
+            'artifacts': {'final': {'path': 'generated/wechat/final.md', 'sha256': sha256(b'final\r\n').hexdigest()}},
             'approvals': {},
             'skill_routes': {},
             'stale_artifacts': [],
@@ -117,6 +118,50 @@ class ProjectSafetyTests(unittest.TestCase):
             'article-state.json: profile_ref must be null or a portable relative reference',
             'article-state.json: stage_status.brief=soon is invalid',
         ])
+
+    def test_article_project_rejects_missing_or_wrong_artifact_hash(self):
+        project = self.root / 'article'
+        project.mkdir()
+        state = {
+            'schema_version': '1.0',
+            'article_id': 'article-1',
+            'mode': 'full',
+            'profile_ref': None,
+            'cheat_binding': None,
+            'current_stage': 'draft',
+            'stage_status': {stage: 'pending' for stage in validate_project.STAGES},
+            'artifacts': {
+                'draft': {'path': 'drafts/draft.md'},
+                'final': {'path': 'drafts/final.md', 'sha256': 'a' * 64},
+            },
+            'approvals': {
+                'final': {
+                    'approved': True,
+                    'artifact_role': 'final',
+                    'artifact_sha256': 'b' * 64,
+                }
+            },
+            'skill_routes': {},
+            'stale_artifacts': [],
+            'required_actions': [],
+            'created_at': '2026-07-28T12:00:00+08:00',
+            'updated_at': '2026-07-28T12:00:00+08:00',
+        }
+        (project / 'article-state.json').write_text(
+            json.dumps(state, ensure_ascii=False) + '\n', encoding='utf-8'
+        )
+        (project / 'drafts').mkdir()
+        (project / 'drafts' / 'final.md').write_text('final\n', encoding='utf-8')
+
+        self.assertEqual(
+            validate_project.validate_article_project(project),
+            [
+                'article-state.json: artifact draft sha256 must be a 64-character lowercase hex SHA256',
+                'article-state.json: artifact draft path does not exist',
+                'article-state.json: artifact final sha256 does not match file contents',
+                'article-state.json: approval final hash does not match artifact final',
+            ],
+        )
 
     def _valid_profile(self) -> Path:
         profile = self.root / 'profile'

@@ -4,6 +4,11 @@
 
 Before every stage that requires Cheat, run the matching dependency check from the installed `SKILL_ROOT`. If the dependency check exits with code 2 or reports `ok: false`, the orchestrator MUST stop before invoking or simulating Cheat. It must report `missing_required` and may not substitute a guessed score, recommendation, prediction, status, publish record, retro, persona, or rubric change. A passing dependency check proves only that the Skill is installed; the orchestrator must still invoke root `cheat-on-content` and follow its selected workflow.
 
+Before trusting any resumable project checkpoint, run
+`python <SKILL_ROOT>/scripts/validate_project.py article <PROJECT_ROOT>`. The
+validator must rehash every recorded artifact and compare every artifact-bound
+approval before a downstream stage is allowed to rely on the state file.
+
 ## Fact gate
 
 Classify claims as user-provided personal material, stable knowledge, or time-sensitive fact. Preserve user material without inventing missing details. User-provided material supports only what the user said, observed, or experienced; it is not external evidence for a factual claim about an AI model, product, company, market, policy, benchmark, price, release, or other changing subject.

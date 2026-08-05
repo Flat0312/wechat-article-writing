@@ -68,11 +68,19 @@ For visual completion, `artifacts.visuals.path` should be
 for the one cover and selected body assets; external Skill output directories are
 provenance only.
 
+Every recorded artifact must point to an existing file and include a lowercase
+64-character SHA256 that matches the file bytes. The project validator recomputes
+that hash; a missing, malformed, stale, or escaping artifact blocks validation.
+
 Article bodies and credentials are never embedded in state. Cheat prediction and retro files remain in the Cheat project and are referenced through the logical binding.
 
 ## Approval rules
 
 An approval bound to an artifact records both `artifact_role` and `artifact_sha256`. A `final` approval MUST bind the recorded `final` artifact; omitting `artifact_role` when calling `record_approval` for key `final` selects that role automatically, while explicitly selecting any other role is rejected. The final artifact must already be recorded.
+
+The project validator also checks every approval that declares an artifact
+binding. Its `artifact_sha256` must be a valid SHA256 and equal the referenced
+artifact hash; a `final` approval without a `final` binding is invalid.
 
 Before Cheat prediction, `approvals.final.artifact_sha256` MUST equal the current `artifacts.final.sha256`. A missing binding, missing final artifact, or hash mismatch blocks prediction and requires the user to confirm the current final text.
 

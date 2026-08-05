@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from typing import Any, Iterator
 
-from article_state import ALLOWED_STATUS, STAGES
+from article_state import ALLOWED_STATUS, STAGES, file_hash
 
 
 PROFILE_DOCS = (
@@ -500,6 +500,7 @@ def validate_article_project(root: Path) -> list[str]:
     if not isinstance(artifacts, dict):
         errors.append("article-state.json: artifacts must be an object")
     else:
+        artifact_hashes: dict[str, str] = {}
         for role, artifact in artifacts.items():
             if not isinstance(artifact, dict):
                 errors.append(
@@ -516,6 +517,92 @@ def validate_article_project(root: Path) -> list[str]:
                     "article-state.json: artifact "
                     f"{role} path must be portable and relative"
                 )
+            recorded_hash = artifact.get("sha256")
+            if not isinstance(recorded_hash, str) or not SHA256_RE.fullmatch(
+                recorded_hash
+            ):
+                errors.append(
+                    "article-state.json: artifact "
+                    f"{role} sha256 must be a 64-character lowercase hex SHA256"
+                )
+            else:
+                artifact_hashes[role] = recorded_hash
+            if not isinstance(value, str) or not _is_portable_relative_path(value):
+                continue
+            target = root.joinpath(*PurePosixPath(value).parts)
+            try:
+                resolved_target = target.resolve(strict=True)
+                resolved_target.relative_to(root.resolve())
+            except FileNotFoundError:
+                errors.append(
+                    f"article-state.json: artifact {role} path does not exist"
+                )
+                continue
+            except (OSError, RuntimeError, ValueError):
+                errors.append(
+                    f"article-state.json: artifact {role} path escapes article project"
+                )
+                continue
+            if not resolved_target.is_file():
+                errors.append(
+                    f"article-state.json: artifact {role} path is not a file"
+                )
+                continue
+            if isinstance(recorded_hash, str) and SHA256_RE.fullmatch(recorded_hash):
+                actual_hash = file_hash(resolved_target)
+                if actual_hash != recorded_hash:
+                    errors.append(
+                        "article-state.json: artifact "
+                        f"{role} sha256 does not match file contents"
+                    )
+        approvals = state.get("approvals", {})
+        if not isinstance(approvals, dict):
+            errors.append("article-state.json: approvals must be an object")
+        else:
+            for approval_key, approval in approvals.items():
+                if not isinstance(approval, dict):
+                    errors.append(
+                        f"article-state.json: approval {approval_key} must be an object"
+                    )
+                    continue
+                artifact_role = approval.get("artifact_role")
+                approval_hash = approval.get("artifact_sha256")
+                has_role = artifact_role is not None
+                has_hash = approval_hash is not None
+                if approval_key == "final" and (
+                    artifact_role != "final" or not has_hash
+                ):
+                    errors.append(
+                        "article-state.json: final approval must bind artifact final"
+                    )
+                if has_role != has_hash:
+                    errors.append(
+                        "article-state.json: approval "
+                        f"{approval_key} must contain artifact_role and artifact_sha256 together"
+                    )
+                    continue
+                if not has_role:
+                    continue
+                if not isinstance(artifact_role, str) or artifact_role not in artifacts:
+                    errors.append(
+                        "article-state.json: approval "
+                        f"{approval_key} references unknown artifact role {artifact_role}"
+                    )
+                    continue
+                if not isinstance(approval_hash, str) or not SHA256_RE.fullmatch(
+                    approval_hash
+                ):
+                    errors.append(
+                        "article-state.json: approval "
+                        f"{approval_key} artifact_sha256 must be a 64-character lowercase hex SHA256"
+                    )
+                    continue
+                artifact_hash = artifact_hashes.get(artifact_role)
+                if artifact_hash is not None and approval_hash != artifact_hash:
+                    errors.append(
+                        "article-state.json: approval "
+                        f"{approval_key} hash does not match artifact {artifact_role}"
+                    )
     html_status = status.get("html") if isinstance(status, dict) else None
     current_stage = state.get("current_stage")
     html_stage_reached = (
