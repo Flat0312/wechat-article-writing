@@ -4,6 +4,7 @@ import stat
 import sys
 import tempfile
 import unittest
+import json
 from hashlib import sha256
 from pathlib import Path
 
@@ -12,6 +13,7 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL_ROOT / "scripts"))
 
 import article_state
+import cheat_form_adapter
 from cheat_prediction_adapter import SnapshotError, create_snapshot
 
 
@@ -22,6 +24,9 @@ class CheatPredictionAdapterTests(unittest.TestCase):
         self.project = self.root / "article"
         self.cheat = self.root / "cheat"
         self.cheat.mkdir()
+        (self.cheat / ".cheat-state.json").write_text(
+            '{"schema_version":"1.2"}\n', encoding="utf-8"
+        )
         self.state = article_state.create_project(
             self.project, "article-1", "full", None, "primary"
         )
@@ -34,6 +39,28 @@ class CheatPredictionAdapterTests(unittest.TestCase):
             self.state, "final", "2026-08-05T10:00:00+08:00"
         )
         article_state.write_state(self.project, self.state)
+        self.form_status = self.root / "form-status.json"
+        self.form_status.write_text(
+            json.dumps(
+                {
+                    "source": "cheat-on-content",
+                    "root_skill_called": True,
+                    "root_route": "cheat-init",
+                    "root_call_status": "completed",
+                    "target_project_binding": "primary",
+                    "content_form": "long-essay",
+                    "cheat_schema_version": "1.2",
+                    "rubric_adapter": "wechat-long-essay-v1",
+                    "rubric_status": "compatible",
+                    "rubric_version": "v1",
+                    "checked_at": "2026-08-05T15:00:00+08:00",
+                }
+            ),
+            encoding="utf-8",
+        )
+        cheat_form_adapter.record_form(
+            self.project, self.cheat, self.form_status, "primary"
+        )
 
     def tearDown(self):
         self.temp.cleanup()
@@ -73,6 +100,12 @@ class CheatPredictionAdapterTests(unittest.TestCase):
         article_state.write_state(self.project, self.state)
 
         with self.assertRaisesRegex(SnapshotError, "approval hash"):
+            create_snapshot(self.project, self.cheat)
+        self.assertFalse((self.cheat / "scripts").exists())
+
+    def test_rejects_prediction_when_form_adaptation_receipt_is_missing(self):
+        (self.project / "cheat-form-receipt.json").unlink()
+        with self.assertRaisesRegex(SnapshotError, "form and rubric adaptation"):
             create_snapshot(self.project, self.cheat)
         self.assertFalse((self.cheat / "scripts").exists())
 

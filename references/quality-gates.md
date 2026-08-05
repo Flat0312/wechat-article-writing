@@ -58,7 +58,7 @@ Editing anchors belong in the draft as explicit requests for real user judgment,
 
 ## Prediction gate
 
-Only an approved final text enters Cheat prediction. The `final` approval MUST be bound to the current final artifact, and `approvals.final.artifact_sha256` MUST equal `artifacts.final.sha256`; otherwise obtain a new user confirmation before prediction. Invoke root `cheat-on-content` for the prediction; do not simulate or approximate it. Do not expose actual performance, retro, audience performance signals, or other prohibited material to the blind scoring route. Never overwrite an immutable prediction.
+Only an approved final text enters Cheat prediction. The `final` approval MUST be bound to the current final artifact, and `approvals.final.artifact_sha256` MUST equal `artifacts.final.sha256`; otherwise obtain a new user confirmation before prediction. For `content_form=long-essay`, verify `cheat-form-receipt.json` with `scripts/cheat_form_adapter.py` first: `root_call_status=completed` and `rubric_status=compatible` are separate required facts. A default opinion-video rubric or `rubric_form_mismatch=true` blocks prediction. Invoke root `cheat-on-content` for the prediction; do not simulate or approximate it. Do not expose actual performance, retro, audience performance signals, or other prohibited material to the blind scoring route. Never overwrite an immutable prediction.
 
 For the long-essay path, create the Cheat-compatible script through
 [`references/cheat-prediction-bridge.md`](cheat-prediction-bridge.md). The

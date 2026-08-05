@@ -3,6 +3,10 @@
 `drafts/final.md` is the WeChat workflow's final artifact, while Cheat's
 `cheat-predict` route accepts a `scripts/<id>.md` input. The total-control
 adapter closes that boundary without copying an unapproved draft by hand.
+Before the copy, the article must contain a verified
+[`cheat-form-receipt.json`](cheat-form-contract.md) whose root Cheat call is
+complete and whose rubric is explicitly compatible with
+`content_form=long-essay`.
 
 ## Preconditions
 

@@ -138,6 +138,26 @@ class WeChatRouteContractTests(unittest.TestCase):
         ):
             self.assertIn(field, receipt)
 
+    def test_long_essay_prediction_separates_cheat_call_and_rubric_adaptation(self):
+        contract = (
+            SKILL_ROOT / "references" / "cheat-form-contract.md"
+        ).read_text(encoding="utf-8")
+        bridge = (
+            SKILL_ROOT / "references" / "cheat-prediction-bridge.md"
+        ).read_text(encoding="utf-8")
+        quality = (
+            SKILL_ROOT / "references" / "quality-gates.md"
+        ).read_text(encoding="utf-8")
+        for required in (
+            "root_call_status",
+            "rubric_status",
+            "rubric_form_mismatch",
+            "wechat-long-essay-v1",
+        ):
+            self.assertIn(required, contract)
+        self.assertIn("cheat-form-receipt.json", bridge)
+        self.assertIn("rubric_status=compatible", quality)
+
     def test_topic_signal_registry_is_the_five_lane_source_of_truth(self):
         registry = (
             SKILL_ROOT / "references" / "topic-signal-registry.md"

@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
+from cheat_form_adapter import FormReceiptError, validate_receipt
+
 
 SCHEMA_VERSION = "1.0"
 FINAL_PATH = "drafts/final.md"
@@ -137,6 +139,28 @@ def _resolve_cheat_project(
     return cheat_project
 
 
+def _validate_form_receipt(
+    article_project: Path, state: dict[str, object], cheat_project: Path
+) -> dict[str, object]:
+    receipt_path = article_project / "cheat-form-receipt.json"
+    try:
+        receipt = _load_json(receipt_path)
+        binding = state.get("cheat_binding")
+        if not isinstance(binding, str):
+            raise FormReceiptError("article state has no logical Cheat binding")
+        return validate_receipt(
+            receipt,
+            binding,
+            cheat_project,
+            expected_form="long-essay",
+        )
+    except (SnapshotError, FormReceiptError) as error:
+        raise SnapshotError(
+            "Cheat content-form and rubric adaptation receipt is required: "
+            f"{error}"
+        ) from error
+
+
 def _make_read_only(path: Path) -> None:
     path.chmod(stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
 
@@ -167,6 +191,7 @@ def create_snapshot(project: Path, cheat_project: Path | None = None) -> dict[st
     state = _load_json(article_project / "article-state.json")
     _, final_bytes, final_hash = _read_final(article_project, state)
     cheat_root = _resolve_cheat_project(article_project, state, cheat_project)
+    _validate_form_receipt(article_project, state, cheat_root)
     scripts_root = cheat_root / "scripts"
     scripts_root.mkdir(exist_ok=True)
 

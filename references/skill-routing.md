@@ -66,6 +66,11 @@ If one signal provider fails, report its missing route or runtime requirement an
 - Rubric change: `cheat-bump`.
 - Progress: `cheat-status`.
 
+For `content_form=long-essay`, prediction additionally requires the total-control
+[`cheat-form-contract.md`](cheat-form-contract.md) receipt. A completed root
+Cheat call and a compatible WeChat long-essay rubric are separate statuses;
+`cheat-predict` must not proceed with an opinion-video-only rubric.
+
 Every init, seed, recommend, score, predict, publish, retro, persona, bump, learn-from, migrate, or status stage MUST invoke the root `cheat-on-content` Skill and let it select its internal workflow. Do not invoke `cheat-score-blind` directly. Do not simulate these actions or reproduce, copy, or approximate its formulas and protocols.
 
 ## Content strategy and learning
