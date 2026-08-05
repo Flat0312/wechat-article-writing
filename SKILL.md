@@ -6,7 +6,7 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 ## 核心规则
 
 1. 涉及账号初始化、对标学习、选题决策、评分、预测、发布登记、复盘、画像、rubric 或 Cheat schema 迁移时，必须真实调用 `cheat-on-content` 根 Skill。不得模拟其子流程或复制其公式。
-  相关子路由包括 `cheat-learn-from`、`cheat-status`、`cheat-migrate`；账号导入必须先完成 `cheat-status`，schema 不兼容时取得单独确认后再执行迁移，迁移后仍需取得兼容的 `cheat-status` 结果。
+ 相关子路由包括 `cheat-learn-from`、`cheat-status`、`cheat-migrate`；账号导入必须先完成 `cheat-status`，schema 不兼容时取得单独确认后再执行迁移，迁移后仍需取得兼容的 `cheat-status` 结果并按 [`references/cheat-status-receipt.md`](references/cheat-status-receipt.md) 写入 `cheat-status-receipt.json` 回执。
 2. 先核查事实，再编辑文风；不得新增用户未提供的经历、数字、案例或立场。
 3. 导入账号先预览，默认只读；不得读取或复制认证目录、Cookie、密钥和缓存。
 4. 每个阶段更新 `article-state.json`。上游产物变化时先按恢复协议传播 `stale` 并持久化，再继续下游。
@@ -19,7 +19,7 @@ description: Use when users ask to 写公众号文章、创作微信公众号推
 11. 中长文与资讯贴图的选题统一采用五路信号汇聚：`creator-buddy` 提供跨平台信号（小红书走 `xiaohongshu-skill`），并显式路由 `gzh-explosive-content-detector` 提供公众号爆款数据；若被分类为通用关键词，必须先取得用户确认的扩展选择后再继续。AI 账号或 AI 主题再调用 `aihot`；同时使用本机 `x-tweet-fetcher` 抓取 X 上的相关推文、长文与话题作为信号（详见规则 15）；最后调用根 `cheat-on-content` 路由到 `cheat-trends`，按账号已启用的热点适配器补充综合热榜。五路候选归一化、去重并保留来源后，必须交给根 `cheat-on-content` 评分和决策，再由用户确认选题角度。
 12. Cheat 子路由按公众号场景裁剪：`cheat-shoot` 只服务视频拍摄登记，不调用；`cheat-trends` 只负责补充、去重和粗筛热点候选，不替代 `creator-buddy`、公众号爆款或 `aihot`，也不替代最终的 Cheat 推荐；`cheat-score-blind` 只能由 Cheat 的 score、predict 或 bump 流程内部调用。
 13. 文章绑定标准长期账号画像时，在大纲和初稿前读取 `voice.md` 与 `content-patterns.md`。将 `voice.md` 和已验证规则作为作者声音的硬约束，将待验证规则作为可选实验；事实、证据、用户明确提供的经历、观点和当篇要求高于任何文风规则，不得为套用文风新增素材。先按 `outline.md` 的“文风执行卡”锁定你的声音，再调用 `khazix-writer` 作为必需的技法辅助，最后由本 Skill 完成融合起草与审校。卡兹克只能提供结构、节奏、场景、类比和自检建议，不得带入其作者身份、口癖、粗口、固定标点、固定结构或固定结尾。
-14. `content_kind=news-card` 的资讯贴图与 long-essay 同级：同样进入发布登记、盲预测与复盘闭环；但走独立轻量建档分支，不进入 long-essay 的 12 阶段 `article-state.json`，也不参与 long-essay v1 正式预测或 rubric 变更流程。发布与数据单独记录；校准使用独立的 news-card 池，不得与 long-essay v1 校准池混池，试运行期不得进入 `wechat-style-learning`。进入贴图流程前先运行 `python scripts/dependency_check.py --stage news-card`；AI 账号或 AI 主题改用 `--stage news-card-ai`。贴图卡图走 guizang 合成（首选）或 imagegen 端到端兜底（与 long-essay 头图相同的 `21:9` 单图契约），不进入 long-essay 的 Ian/Baoyu 正文配图轨道，也不要求 `gzh-design` HTML 门禁（贴图直接交付图片）。
+14. `content_kind=news-card` 的资讯贴图与 long-essay 同级：同样进入发布登记、盲预测与复盘闭环；但走独立轻量建档分支，不进入 long-essay 的 12 阶段 `article-state.json`，也不参与 long-essay v1 正式预测或 rubric 变更流程。发布与数据单独记录；校准使用独立的 news-card 池，不得与 long-essay v1 校准池混池，试运行期不得进入 `wechat-style-learning`。进入贴图流程前先运行 `python <SKILL_ROOT>/scripts/dependency_check.py --stage news-card`；AI 账号或 AI 主题改用 `--stage news-card-ai`。贴图卡图走 guizang 合成（首选）或 imagegen 端到端兜底（与 long-essay 头图相同的 `21:9` 单图契约），不进入 long-essay 的 Ian/Baoyu 正文配图轨道，也不要求 `gzh-design` HTML 门禁（贴图直接交付图片）。
 15. 资讯贴图素材抓取使用本机 `x-tweet-fetcher`（`C:\Users\33158\.codex\tools\x-tweet-fetcher`，虚拟环境 `\.venv\Scripts\xtf.exe`）：
     - `--url <推文链接>`：抓单条推文（含推文内嵌长文全文），零依赖，无需登录。
     - `--article <文章链接或ID>`：抓 X 长文，需要浏览器后端（Playwright/Camofox）；未登录时只能拿到标题与公开预览（`is_partial: true`）。

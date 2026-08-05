@@ -101,6 +101,26 @@ class WeChatRouteContractTests(unittest.TestCase):
         for route in routes:
             self.assertIn(route, execution)
 
+    def test_migration_requires_a_machine_readable_post_status_receipt(self):
+        execution = (SKILL_ROOT / "references" / "execution.md").read_text(
+            encoding="utf-8"
+        )
+        receipt = (
+            SKILL_ROOT / "references" / "cheat-status-receipt.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("cheat-status-receipt.json", self.onboarding)
+        self.assertIn("cheat-status-receipt.json", self.skill)
+        self.assertIn("cheat-status-receipt.json", execution)
+        for field in (
+            "schema_version",
+            "target_project_binding",
+            "cheat_schema_version",
+            '"status": "compatible"',
+            '"source": "cheat-status"',
+            "checked_at",
+        ):
+            self.assertIn(field, receipt)
+
 
 if __name__ == '__main__':
     unittest.main()

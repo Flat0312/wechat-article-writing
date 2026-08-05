@@ -50,7 +50,7 @@ If one signal provider fails, report its missing route or runtime requirement an
 ## Cheat routes
 
 - Existing account: status check; migrate only with authorization.
-- Schema migration: `cheat-migrate` only with explicit authorization or after migration in a copied working project.
+- Schema migration: `cheat-migrate` only with explicit authorization or after migration in a copied working project; then re-run root `cheat-status` and require the total-control post-migrate receipt before continuing.
 - Benchmark or imported evidence: `cheat-learn-from` for sample-scoped evidence, then obtain separate user confirmation before migrating or importing the sample scope and target Cheat project.
 - New long-term account: initialize as `long-essay`.
 - No topic: `cheat-seed`.

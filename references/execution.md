@@ -113,9 +113,12 @@ python <SKILL_ROOT>/scripts/dependency_check.py --stage retro
 2. 否则运行 `python <SKILL_ROOT>/scripts/profile_adapter.py preview <源目录>`。
 3. 检测到 Cheat 项目时，真实调用 `cheat-on-content` 检查状态和 schema 兼容性。
 4. schema 不兼容时停止只读导入，取得授权后才在源项目或工作副本迁移。
-5. 展示映射、缺失、冲突和排除项。
-6. 用户批准后运行 `python <SKILL_ROOT>/scripts/profile_adapter.py import <源目录> <账号目录> --approved`。
-7. 再运行 `python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>` 验证结果。
+5. 若执行了 `cheat-migrate`，再次真实调用根 `cheat-status`，按
+   [`references/cheat-status-receipt.md`](cheat-status-receipt.md) 生成并验证
+   `<账号目录>/cheat-status-receipt.json`；回执缺失或失败时停止导入。
+6. 展示映射、缺失、冲突和排除项。
+7. 用户批准后运行 `python <SKILL_ROOT>/scripts/profile_adapter.py import <源目录> <账号目录> --approved`。
+8. 再运行 `python <SKILL_ROOT>/scripts/validate_project.py profile <账号目录>` 验证结果。
 
 预览必须把会复制的 `mapped` 文档与保持在源项目中的 `live_linked` Cheat 来源分开展示。`.cheat-state.json`、rubric、候选池和预测记录通过本机 binding 实时解析，不复制成会漂移的快照。
 
