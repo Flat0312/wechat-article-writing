@@ -77,7 +77,7 @@ These four entries are **live-linked** through `cheat_binding`; `.cheat-state.js
 
 Import begins with a read-only preview. `profile_adapter` preview returns `requires_cheat_status_check`; it does not call Cheat or establish schema compatibility. Before import, the orchestrator MUST invoke `cheat-on-content` status for the source and successfully resolve a compatible state. If status is unresolved or incompatible, the orchestrator MUST NOT run import. The adapter's `approved` flag authorizes its local write only and never substitutes for the mandatory status check.
 
-If Cheat reports an incompatible schema, migration requires separate explicit approval in the source project or in a copied working project. After migration, the orchestrator must invoke root `cheat-status` again and write a valid [`cheat-status-receipt.json`](cheat-status-receipt.md) through the total-control adapter before import. Authentication folders, secrets, caches, and absolute paths are excluded.
+If Cheat reports an incompatible schema, migration requires separate explicit approval in the source project or in a copied working project. After migration, the orchestrator must invoke root `cheat-status` again and write a valid [`cheat-status-receipt.json`](cheat-contracts.md#post-migrate-cheat-status-receipt) through the total-control adapter before import. Authentication folders, secrets, caches, and absolute paths are excluded.
 
 ## Timestamp format
 

@@ -37,17 +37,17 @@
     "creator-buddy": {
       "stage": "topic",
       "input": {
-        "lane": "creator-buddy-cross-platform",
+        "lane": "creator-buddy-xiaohongshu",
         "route_override": {
-          "provider": "xiaohongshu-skill",
-          "route": "local-playwright",
-          "allow_fallback": false
+          "provider": "global-content-search",
+          "route": "agent-reach-opencli",
+          "allow_fallback": true
         }
       },
       "output": {
         "status": "completed",
         "paths": ["research/creator-buddy-xhs.json", "research/sources.json"],
-        "provider": "xiaohongshu-skill"
+        "provider": "global-content-search"
       }
     },
     "gzh-explosive-content-detector": {
@@ -63,27 +63,6 @@
       "stage": "topic-ai",
       "input": {"lane": "aihot", "window": "recent"},
       "output": {"status": "completed", "paths": ["research/aihot.json"]}
-    },
-    "x-tweet-fetcher": {
-      "stage": "topic",
-      "input": {"lane": "x-tweet-fetcher", "mode": "url"},
-      "output": {"status": "completed", "paths": ["research/x-raw/post.json"]}
-    },
-    "khazix-writer": {
-      "stage": "writing",
-      "input": {"mode": "craft-only", "style_card_locked": true},
-      "output": {
-        "schema_version": "1.0",
-        "source_skill": "khazix-writer",
-        "mode": "craft-only",
-        "suggestions": [
-          {
-            "kind": "transition",
-            "section_ref": "section-2",
-            "text": "让转场由上一节的因果后果推动。"
-          }
-        ]
-      }
     },
     "humanizer-zh": {
       "stage": "editing",

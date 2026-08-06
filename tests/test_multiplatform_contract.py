@@ -17,8 +17,8 @@ class MultiplatformContractTests(unittest.TestCase):
 
     def test_wechat_delivery_contract_does_not_register_other_platforms(self):
         routing = (SKILL_ROOT / 'references' / 'skill-routing.md').read_text(encoding='utf-8-sig')
-        self.assertIn('cross-platform topic signals', routing)
-        self.assertIn('xiaohongshu-skill', routing)
+        self.assertIn('跨平台选题信号', routing)
+        self.assertIn('global-content-search', routing)
         self.assertNotIn('Douyin keyword heat', routing)
         self.assertNotIn('Generate both routes for one anchor', (SKILL_ROOT / 'SKILL.md').read_text(encoding='utf-8-sig'))
 

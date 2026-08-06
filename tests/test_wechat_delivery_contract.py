@@ -13,15 +13,17 @@ sys.path.insert(0, str(SKILL_ROOT / 'scripts'))
 class WeChatDeliveryContractTests(unittest.TestCase):
     def test_cover_is_21_9_only_while_body_illustrations_remain_enabled(self):
         routing = (SKILL_ROOT / 'references' / 'skill-routing.md').read_text(encoding='utf-8')
+        quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
         plan = (SKILL_ROOT / 'assets' / 'article-project-template' / 'visuals' / 'visual-plan.md').read_text(encoding='utf-8')
-        self.assertIn('exactly one static `21:9`', routing)
+        self.assertIn('只生成一张静态 `21:9`', quality)
         self.assertIn('不生成 `1:1` 分享卡', plan)
         self.assertIn('## 正文配图认知锚点', plan)
-        self.assertIn('Dual-rail body illustration routing', routing)
+        self.assertIn('每个正文认知锚点', quality)
+        self.assertIn('quality-gates.md', routing)
 
     def test_publish_contract_is_manual_only(self):
         publishing = (SKILL_ROOT / 'references' / 'publishing.md').read_text(encoding='utf-8')
-        self.assertIn('Manual delivery only', publishing)
+        self.assertIn('仅人工交付', publishing)
         self.assertNotIn('draft_uploaded', publishing)
         self.assertNotIn('upload_failed', publishing)
 
@@ -50,17 +52,16 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         # quality-gates.md 仍要在调用 gzh-design 时把契约作为上位约束传入
         self.assertIn('不可选的上位约束', quality)
         self.assertIn('references/wechat-layout-contract.md', quality)
-        # execution.md 仍要记录"9 项排版检查"到 html-qc
-        self.assertIn('九项排版检查', execution)
+        self.assertIn('quality-gates.md', execution)
 
     def test_gzh_design_author_cta_policy_is_explicit(self):
-        cta = (SKILL_ROOT / 'references' / 'gzh-design-author-cta.md').read_text(encoding='utf-8')
+        cta = (SKILL_ROOT / 'references' / 'external-contracts.md').read_text(encoding='utf-8')
         quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
         execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
         for required in ('author_cta: disabled', 'author_cta: explicit', '{{作者名}}', '{{简介}}'):
             self.assertIn(required, cta)
-        self.assertIn('gzh-design-author-cta.md', quality)
-        self.assertIn('gzh-design-author-cta.md', execution)
+        self.assertIn('external-contracts.md#gzh-design-author-cta-override', quality)
+        self.assertIn('quality-gates.md', execution)
 
     def test_publish_dependency_no_longer_discovers_draft_adapter(self):
         import dependency_check
@@ -70,12 +71,12 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         self.assertEqual(result['missing_required'], [])
 
     def test_long_essay_prediction_bridge_is_declared(self):
-        bridge = (SKILL_ROOT / 'references' / 'cheat-prediction-bridge.md').read_text(encoding='utf-8')
+        bridge = (SKILL_ROOT / 'references' / 'cheat-contracts.md').read_text(encoding='utf-8')
         quality = (SKILL_ROOT / 'references' / 'quality-gates.md').read_text(encoding='utf-8')
         execution = (SKILL_ROOT / 'references' / 'execution.md').read_text(encoding='utf-8')
         self.assertIn('prediction-input-reference.json', bridge)
         self.assertIn('cheat_prediction_adapter.py', bridge)
-        self.assertIn('input receipt', quality)
+        self.assertIn('输入回执', quality)
         self.assertIn('哈希绑定的只读 Cheat 输入', execution)
 
     def test_wechat_publish_bridge_and_metrics_contract_are_declared(self):
@@ -85,7 +86,7 @@ class WeChatDeliveryContractTests(unittest.TestCase):
         for field in ('publish_json_sha256', 'public_url', 'cheat_prediction_file', 'platform', 'metrics.json'):
             self.assertIn(field, bridge)
         self.assertIn('wechat_publish_bridge.py', bridge)
-        self.assertIn('After a successful root `cheat-publish`', publishing)
+        self.assertIn('根 `cheat-publish` 成功后', publishing)
         self.assertIn('publish-reference.json', execution)
 
     def test_body_illustration_preflight_accepts_either_complete_route(self):

@@ -96,6 +96,7 @@ description: Build an evidence-bound WeChat Official Account long-essay outline 
 - 叙述位置
 - 从 `voice.md` 和已验证规则中选择的 2–4 条稳定规则
 - 本篇主动完成的 1–2 项文笔目标
+- 从材料密度、说话位置、段落推进、中文词序和诚实不确定性中选择的 2–3 项活人感执行重点
 - 无，或主动选择的 1 条待验证实验规则
 - 无，或主动选择的 1 条终稿观察候选
 - 最容易出现的 2–4 个禁用惯性
@@ -106,8 +107,8 @@ description: Build an evidence-bound WeChat Official Account long-essay outline 
 不得把全部画像机械套入，不得用“更口语”“更有活人感”“像某某作者”替代可执行
 动作，也不得把外部作者身份、口癖、粗口、固定标点、固定字数或固定结尾写入卡片。
 
-文风执行卡完成后，交还总控调用 `khazix-writer` 做必需的技法辅助；本 Skill 不
-直接采用其原文，不允许它覆盖账号声音或新增素材。
+文风执行卡完成后，交还总控调用必需的 `human-writing` 做活人感主执行；本 Skill
+不直接采用外部 Skill 原文，不允许通用规则覆盖账号声音或新增素材。
 
 ### 6. 设计章节
 
@@ -195,6 +196,7 @@ description: Build an evidence-bound WeChat Official Account long-essay outline 
 - 叙述位置：
 - 稳定规则（2–4 条）：
 - 文笔目标（1–2 项）：
+- 活人感执行重点（2–3 项）：
 - 待验证实验（无 / 1 条）：
 - 终稿观察候选（无 / 1 条）：
 - 禁用惯性（2–4 个）：
@@ -221,7 +223,7 @@ description: Build an evidence-bound WeChat Official Account long-essay outline 
 - 写前卡片八项齐全。
 - 恰好一个主增强策略和一个中心论点。
 - 文风执行卡完整，稳定规则有明确来源，且没有外部作者 persona 或机械配额。
-- 已为 `khazix-writer` 预留技法辅助边界，且没有把它写成作者声音。
+- 已为 `human-writing` 预留活人感主执行要求，且没有把它写成作者声音。
 - 每节有独立职责并推进论点。
 - 所有事实锚点均能回到证据包。
 - 有 2–3 个真实用户编辑锚点。

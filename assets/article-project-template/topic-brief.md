@@ -9,11 +9,14 @@
 
 | 信号路线 | 状态 | 查询范围或缺失原因 | 产物引用 |
 |---|---|---|---|
-| creator-buddy-cross-platform | pending | | |
+| creator-buddy-xiaohongshu | pending | | |
 | gzh-explosive-content-detector | pending | | |
 | aihot（仅 AI 主题） | not_applicable | | |
-| x-tweet-fetcher | pending | | |
-| cheat-trends | pending | | |
+| creator-buddy-bilibili | pending | | |
+| creator-buddy-douyin | pending | | |
+| creator-buddy-zhihu | pending | | |
+| creator-buddy-weibo | pending | | |
+| creator-buddy-toutiao | pending | | |
 
 ## 归一化候选池
 

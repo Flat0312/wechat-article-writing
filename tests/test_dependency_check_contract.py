@@ -18,9 +18,9 @@ class DependencyCheckContractTests(unittest.TestCase):
 
     @staticmethod
     def _cli_env(tmpdir: str):
-        cli = Path(tmpdir) / "xtf.exe"
+        cli = Path(tmpdir) / "opencli.exe"
         cli.write_text("stub", encoding="utf-8")
-        return {"X_TWEET_FETCHER_BIN": str(cli)}
+        return {"OPENCLI_BIN": str(cli)}
 
     def test_unknown_stage_raises(self):
         import dependency_check
@@ -38,33 +38,32 @@ class DependencyCheckContractTests(unittest.TestCase):
         self.assertEqual(
             result["missing_required"],
             [
-                "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
-                "xiaohongshu-skill",
+                "global-content-search",
             ],
         )
 
-    def test_topic_reports_missing_x_cli_separately_from_skill_presence(self):
+    def test_topic_reports_missing_optional_cli_without_blocking_fallbacks(self):
         import dependency_check
 
         result = dependency_check.check_dependencies(
             "topic",
             self._discovered(
                 "cheat-on-content",
-                "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
-                "xiaohongshu-skill",
+                "global-content-search",
             ),
-            env={"X_TWEET_FETCHER_BIN": "C:/missing/xtf.exe"},
+            env={"OPENCLI_BIN": "C:/missing/opencli.exe"},
         )
-        self.assertFalse(result["ok"])
+        self.assertTrue(result["ok"])
         self.assertEqual(result["missing_required"], [])
+        self.assertEqual(result["cli_runtime"]["missing_required"], [])
         self.assertEqual(
-            result["cli_runtime"]["missing_required"], ["x-tweet-fetcher"]
+            result["cli_runtime"]["missing_optional"], ["opencli"]
         )
-        self.assertIn("xiaohongshu-skill", result["skill_presence"]["available"])
+        self.assertIn("global-content-search", result["skill_presence"]["available"])
 
     def test_pipeline_stage_aliases_are_explicit(self):
         import dependency_check
@@ -90,15 +89,32 @@ class DependencyCheckContractTests(unittest.TestCase):
         self.assertEqual(result["script_runtime"]["required"], [])
         self.assertEqual(result["script_runtime"]["missing_required"], [])
 
+    def test_writing_requires_only_human_writing(self):
+        import dependency_check
+
+        missing = dependency_check.check_dependencies("writing", self._discovered())
+        self.assertEqual(missing["missing_required"], ["human-writing"])
+        ready = dependency_check.check_dependencies(
+            "writing", self._discovered("human-writing")
+        )
+        self.assertTrue(ready["ok"])
+
+    def test_editing_requires_human_writing_and_keeps_humanizer_optional(self):
+        import dependency_check
+
+        result = dependency_check.check_dependencies("editing", self._discovered())
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["missing_required"], ["human-writing"])
+        self.assertEqual(result["optional_missing"], ["humanizer-zh"])
+
     def test_topic_reports_script_import_runtime_separately(self):
         import dependency_check
 
         discovered = self._discovered(
             "cheat-on-content",
-            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
-            "xiaohongshu-skill",
+            "global-content-search",
         )
         with tempfile.TemporaryDirectory() as tmpdir:
             with mock.patch.object(dependency_check.importlib.util, "find_spec", return_value=None):
@@ -185,7 +201,7 @@ class DependencyCheckContractTests(unittest.TestCase):
             structured["missing_required"], ["baoyu-article-illustrator"]
         )
 
-    def test_news_card_stage_requires_5_lane_signals_and_cover(self):
+    def test_news_card_stage_requires_registered_signals_and_cover(self):
         import dependency_check
 
         result = dependency_check.check_dependencies(
@@ -196,18 +212,18 @@ class DependencyCheckContractTests(unittest.TestCase):
                 "gzh-explosive-content-detector",
                 "wechat-content-strategy",
             ),
-            env={"X_TWEET_FETCHER_BIN": "C:/missing/xtf.exe"},
+            env={"OPENCLI_BIN": "C:/missing/opencli.exe"},
         )
         self.assertFalse(result["ok"])
         self.assertEqual(
-            result["missing_required"], ["cheat-trends", "xiaohongshu-skill"]
+            result["missing_required"], ["global-content-search"]
         )
         self.assertEqual(
             result["missing_any"],
             [["guizang-social-card-skill", "imagegen"]],
         )
 
-    def test_news_card_stage_passes_with_minimal_5_lane_signals(self):
+    def test_news_card_stage_passes_with_registered_signals(self):
         import dependency_check
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -215,11 +231,10 @@ class DependencyCheckContractTests(unittest.TestCase):
                 "news-card",
                 self._discovered(
                     "cheat-on-content",
-                    "cheat-trends",
                     "creator-buddy",
                     "gzh-explosive-content-detector",
                     "wechat-content-strategy",
-                    "xiaohongshu-skill",
+                    "global-content-search",
                     "guizang-social-card-skill",
                 ),
                 env=self._cli_env(tmpdir),
@@ -237,11 +252,10 @@ class DependencyCheckContractTests(unittest.TestCase):
                 "news-card",
                 self._discovered(
                     "cheat-on-content",
-                    "cheat-trends",
                     "creator-buddy",
                     "gzh-explosive-content-detector",
                     "wechat-content-strategy",
-                    "xiaohongshu-skill",
+                    "global-content-search",
                     "imagegen",
                 ),
                 env=self._cli_env(tmpdir),
@@ -257,14 +271,13 @@ class DependencyCheckContractTests(unittest.TestCase):
             "news-card-ai",
             self._discovered(
                 "cheat-on-content",
-                "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
                 "wechat-content-strategy",
-                "xiaohongshu-skill",
+                "global-content-search",
                 "guizang-social-card-skill",
             ),
-            env={"X_TWEET_FETCHER_BIN": "C:/missing/xtf.exe"},
+            env={"OPENCLI_BIN": "C:/missing/opencli.exe"},
         )
         self.assertFalse(result["ok"])
         self.assertEqual(result["missing_required"], ["aihot"])
@@ -277,12 +290,11 @@ class DependencyCheckContractTests(unittest.TestCase):
                 "news-card-ai",
                 self._discovered(
                     "cheat-on-content",
-                    "cheat-trends",
                     "creator-buddy",
                     "gzh-explosive-content-detector",
                     "wechat-content-strategy",
                     "aihot",
-                    "xiaohongshu-skill",
+                    "global-content-search",
                     "imagegen",
                 ),
                 env=self._cli_env(tmpdir),

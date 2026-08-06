@@ -219,7 +219,7 @@ class TopicDependencyTests(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(
             result["missing_required"],
-            ["cheat-trends", "gzh-explosive-content-detector", "xiaohongshu-skill"],
+            ["gzh-explosive-content-detector", "global-content-search"],
         )
 
     def test_standard_topic_passes_with_all_required_lanes(self):
@@ -227,10 +227,9 @@ class TopicDependencyTests(unittest.TestCase):
             "topic",
             self._discovered(
                 "cheat-on-content",
-                "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
-                "xiaohongshu-skill",
+                "global-content-search",
             ),
         )
         self.assertTrue(result["ok"])
@@ -241,10 +240,9 @@ class TopicDependencyTests(unittest.TestCase):
             "topic-ai",
             self._discovered(
                 "cheat-on-content",
-                "cheat-trends",
                 "creator-buddy",
                 "gzh-explosive-content-detector",
-                "xiaohongshu-skill",
+                "global-content-search",
             ),
         )
         self.assertFalse(result["ok"])
@@ -269,6 +267,9 @@ class DeliveryContractTests(unittest.TestCase):
         routing = (SKILL_ROOT / "references" / "skill-routing.md").read_text(
             encoding="utf-8"
         )
+        quality = (SKILL_ROOT / "references" / "quality-gates.md").read_text(
+            encoding="utf-8"
+        )
         plan = (
             SKILL_ROOT
             / "assets"
@@ -276,16 +277,17 @@ class DeliveryContractTests(unittest.TestCase):
             / "visuals"
             / "visual-plan.md"
         ).read_text(encoding="utf-8")
-        self.assertIn("exactly one static `21:9`", routing)
+        self.assertIn("只生成一张静态 `21:9`", quality)
         self.assertIn("不生成 `1:1` 分享卡", plan)
         self.assertIn("## 正文配图认知锚点", plan)
-        self.assertIn("Dual-rail body illustration routing", routing)
+        self.assertIn("每个正文认知锚点", quality)
+        self.assertIn("quality-gates.md", routing)
 
     def test_publish_contract_is_manual_only(self):
         publishing = (SKILL_ROOT / "references" / "publishing.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Manual delivery only", publishing)
+        self.assertIn("仅人工交付", publishing)
         self.assertNotIn("draft_uploaded", publishing)
         self.assertNotIn("upload_failed", publishing)
 

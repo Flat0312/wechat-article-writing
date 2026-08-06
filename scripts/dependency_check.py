@@ -24,9 +24,13 @@ STAGE_ALIASES = {
 }
 
 CLI_RULES = {
-    "x-tweet-fetcher": {
-        "env": ("X_TWEET_FETCHER_BIN", "XTF_BIN"),
-        "commands": ("xtf", "xtf.exe", "x-tweet-fetcher"),
+    "agent-reach": {
+        "env": ("AGENT_REACH_BIN",),
+        "commands": ("agent-reach", "agent-reach.exe"),
+    },
+    "opencli": {
+        "env": ("OPENCLI_BIN",),
+        "commands": ("opencli", "opencli.exe"),
     },
 }
 
@@ -63,23 +67,21 @@ STAGE_RULES = {
     "topic": {
         "required": [
             "cheat-on-content",
-            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
-            "xiaohongshu-skill",
+            "global-content-search",
         ],
-        "required_cli": ["x-tweet-fetcher"],
+        "optional_cli": ["opencli", "agent-reach"],
     },
     "topic-ai": {
         "required": [
             "cheat-on-content",
-            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
             "aihot",
-            "xiaohongshu-skill",
+            "global-content-search",
         ],
-        "required_cli": ["x-tweet-fetcher"],
+        "optional_cli": ["opencli", "agent-reach"],
     },
     # 资讯贴图（news-card）：与 long-essay 并行但走独立轻量分支。
     # 不进 12 阶段 article-state.json，不走 long-essay 视觉/HTML 轨道。
@@ -88,33 +90,31 @@ STAGE_RULES = {
     "news-card": {
         "required": [
             "cheat-on-content",
-            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
             "wechat-content-strategy",
-            "xiaohongshu-skill",
+            "global-content-search",
         ],
-        "required_cli": ["x-tweet-fetcher"],
+        "required_cli": ["opencli", "agent-reach"],
         "any": [["guizang-social-card-skill", "imagegen"]],
     },
     "news-card-ai": {
         "required": [
             "cheat-on-content",
-            "cheat-trends",
             "creator-buddy",
             "gzh-explosive-content-detector",
             "wechat-content-strategy",
             "aihot",
-            "xiaohongshu-skill",
+            "global-content-search",
         ],
-        "required_cli": ["x-tweet-fetcher"],
+        "required_cli": ["opencli", "agent-reach"],
         "any": [["guizang-social-card-skill", "imagegen"]],
     },
-    # 卡兹克必须参与技法辅助，但不得成为账号作者声音。
-    "writing": {"required": ["khazix-writer"]},
+    # Human-writing 负责主要活人感执行；不再调用外部作者文风 Skill。
+    "writing": {"required": ["human-writing"]},
     "strategy": {"required": ["wechat-content-strategy"]},
-    # 去 AI 痕迹是可执行的第一方门禁；Humanizer-zh 只作为可选诊断器。
-    "editing": {"optional": ["humanizer-zh"]},
+    # Human-writing 的改稿与检查是必需门禁；Humanizer-zh 只作为可选诊断器。
+    "editing": {"required": ["human-writing"], "optional": ["humanizer-zh"]},
     "learning": {"required": ["wechat-style-learning"]},
     "cover": {"any": [["guizang-social-card-skill", "imagegen"]]},
     "visual": {
@@ -261,15 +261,15 @@ def _find_cli(cli_name, env):
             }
 
     default_paths = []
-    if cli_name == "x-tweet-fetcher":
+    if cli_name == "agent-reach":
         default_paths.append(
             Path.home()
-            / ".codex"
-            / "tools"
-            / "x-tweet-fetcher"
-            / ".venv"
+            / "AppData"
+            / "Roaming"
+            / "Python"
+            / f"Python{os.sys.version_info.major}{os.sys.version_info.minor}"
             / "Scripts"
-            / "xtf.exe"
+            / "agent-reach.exe"
         )
     for candidate in default_paths:
         path = _resolve_executable(candidate, env)
@@ -282,15 +282,21 @@ def _find_cli(cli_name, env):
     return {"ok": False, "path": None, "source": None}
 
 
-def _cli_runtime(required_cli, env=None):
+def _cli_runtime(required_cli, optional_cli=None, env=None):
     environment = os.environ if env is None else env
-    checks = {name: _find_cli(name, environment) for name in required_cli}
+    optional_cli = list(optional_cli or [])
+    all_cli = list(dict.fromkeys([*required_cli, *optional_cli]))
+    checks = {name: _find_cli(name, environment) for name in all_cli}
     available = [name for name, result in checks.items() if result["ok"]]
     missing_required = [name for name, result in checks.items() if not result["ok"]]
+    missing_required = [name for name in required_cli if name in missing_required]
+    missing_optional = [name for name in optional_cli if not checks[name]["ok"]]
     return {
         "required": list(required_cli),
         "available": available,
         "missing_required": missing_required,
+        "optional": optional_cli,
+        "missing_optional": missing_optional,
         "checks": checks,
     }
 
@@ -404,7 +410,11 @@ def check_dependencies(stage, discovered, env=None):
         name for name in rules.get("optional", []) if name not in available_set
     ]
     script_runtime = _script_runtime(resolved_stage, discovered)
-    cli_runtime = _cli_runtime(rules.get("required_cli", []), env=env)
+    cli_runtime = _cli_runtime(
+        rules.get("required_cli", []),
+        rules.get("optional_cli", []),
+        env=env,
+    )
     skill_presence = {
         "available": available,
         "paths": {

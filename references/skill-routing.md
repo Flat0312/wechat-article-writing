@@ -1,128 +1,69 @@
-# Skill Routing Contract
+# Skill 路由契约
 
-## Canonical registry
+## 规范注册表
 
-| Skill | Responsibility | Rule |
+| Skill | 职责 | 规则 |
 |---|---|---|
-| `cheat-on-content` | Init, topic decision, score, prediction, publish, retro, persona, rubric, benchmark import, migration | Mandatory whenever the stage involves Cheat |
-| `cheat-trends` | Configured trend-adapter collection, deduplication, and rough candidate scoring | Mandatory fifth topic-signal lane; invoke through root `cheat-on-content` |
-| `creator-buddy` | WeChat hits, competitors, cross-platform topic signals | Topic signal provider |
-| `xiaohongshu-skill` | Xiaohongshu keyword heat via local Playwright login (free, no API key) | Default Xiaohongshu route for topic discovery |
-| `gzh-explosive-content-detector` | Recent WeChat viral samples, growth signals, headline patterns, niche terms | Mandatory WeChat branch for topic discovery; invoke through `creator-buddy` and preserve its generic-keyword confirmation rule |
-| `aihot` | Current AI news | Invoke for AI accounts or AI topics |
-| `x-tweet-fetcher` | X/Twitter tweets, threads, long-form articles, and timeline signals via local CLI (no API key) | Mandatory X lane for topic discovery on both long essays and news cards |
-| `wechat-article-writing` | First-party drafting, account voice, prose execution and final style gate | Mandatory owner of article drafting; read `references/writing-style.md` |
-| `khazix-writer` | Required craft assistant | Must participate after the style card is locked under [`khazix-craft-contract.md`](khazix-craft-contract.md); never the author voice and never import persona, signature, quota or fixed mannerism |
-| `humanizer-zh` | Optional AI-pattern diagnostic | Run only after facts, structure and account voice stabilize under [`humanizer-diagnostic-contract.md`](humanizer-diagnostic-contract.md); accept local suggestions selectively and never replace the whole draft |
-| `wechat-content-strategy` | Evidence-bound content enhancement, outline, writing parameters, style card and editing anchors | Mandatory after topic/evidence and before first-party drafting |
-| `wechat-style-learning` | Confirmed edit learning for long-term profiles | Invoke only on an explicit learn-from-edits request and persist only after confirmation |
-| `guizang-social-card-skill` | One 21:9 WeChat main cover | Preferred cover route; explicitly suppress its default 1:1 pair output; ImageGen fallback allowed under cover routing rules |
-| `ian-xiaohei-illustrations` | Metaphor, emotion, identity, cognitive turns | Body illustration rail A |
-| `baoyu-article-illustrator` | Process, hierarchy, comparison, matrix, timeline, exact labels, evidence-backed data | Body illustration rail B |
-| `imagegen` | Optional Codex image Skill | Sanctioned cover fallback (see cover routing rules); discovery hint for body visuals, where each selected route resolves the actual runtime image backend, so absence does not by itself block `visual` |
-| `gzh-design` | WeChat HTML, preview, platform validation | Required for HTML completion; accept alias `gzh-design-skill` |
+| `cheat-on-content` | Cheat 生命周期所有者 | 遵循 `SKILL.md` 核心约束第 1 条 |
+| `creator-buddy` | 公众号爆款与跨平台选题信号：小红书 / B站 / 抖音 / 知乎 / 微博 / 头条 | 提供选题信号 |
+| `global-content-search` | 小红书、B站、抖音及公开热榜搜索 | 默认内容搜索路线；保留实际后端与明确的缺失状态 |
+| `gzh-explosive-content-detector` | 近期公众号爆款样本、增长信号、标题模式、赛道词 | 选题发现必须使用的公众号分支；通过 `creator-buddy` 调用并保留其通用关键词确认规则 |
+| `aihot` | 当前 AI 新闻 | AI 账号或 AI 主题必须调用 |
+| `wechat-article-writing` | 第一方起草、账号声音、文笔执行和最终文风门禁 | 文章起草的必需所有者；读取 `references/writing-style.md` |
+| `human-writing` | 必需的活人感正文主流程 | 文风卡锁定后，必须参与每篇中长文的起草与修订；使用其材料、说话者位置、自然中文和文笔检查流程，但不得让它创建或替代账号声音 |
+| `humanizer-zh` | 可选的 AI 痕迹诊断 | 仅在事实、结构和账号声音稳定后，按 [`external-contracts.md`](external-contracts.md#humanizer-diagnostic-contract) 运行；选择性接受局部建议，绝不替换全文 |
+| `wechat-content-strategy` | 证据约束的内容增强、提纲、写作参数、文风卡与编辑锚点 | 主题和证据就绪后、第一方起草前必须调用 |
+| `wechat-style-learning` | 长期账号的已确认改稿学习 | 仅在用户明确要求从改稿学习时调用，并且只在确认后持久化 |
+| `guizang-social-card-skill` | 微信封面合成 | 遵循 `quality-gates.md` 的视觉门禁 |
+| `ian-xiaohei-illustrations` | 正文配图路线 | 遵循 `quality-gates.md` 的视觉门禁 |
+| `baoyu-article-illustrator` | 正文配图路线 | 遵循 `quality-gates.md` 的视觉门禁 |
+| `imagegen` | 可选的 Codex 图片 Skill | 仅可在 `quality-gates.md` 的视觉门禁下使用 |
+| `gzh-design` | 微信 `<section>` HTML 与平台校验 | 遵循 `quality-gates.md` 的 HTML 门禁；接受别名 `gzh-design-skill` |
+| `space-xhs-buddy` | 已确认内容的小红书原生交接 | 仅在项目启用小红书且用户确认具体改编时使用；应路由到写作、标题、图文专项 Skill，不得复制公众号终稿 |
 
-`guizang-social-card-skill` owns cover composition and typography. This orchestrator overrides its general WeChat pair default: generate only the `21:9` main cover, with no `1:1` sharing card, pair preview, carousel, or Live Photo. When suitable photo material is missing, ImageGen may generate the base photo while guizang still composes the typography (material fallback); only when guizang itself is unavailable may ImageGen produce the entire cover end to end (route fallback). Every fallback must be explicitly flagged in the delivery notes and in `visual-plan.md`. Body illustrations remain a separate Ian/Baoyu pipeline.
+封面、正文配图和 HTML 规则以 [`quality-gates.md`](quality-gates.md) 为唯一来源。
+选题 lane 名称、适用性、状态、候选字段与编排以
+[`topic-signal-registry.md`](topic-signal-registry.md) 为唯一来源。
 
-The lane names, applicability, statuses and candidate fields below are
-single-sourced in [`topic-signal-registry.md`](topic-signal-registry.md).
+## 明确排除的 Cheat 路由
 
-## Intentionally excluded Cheat routes
+权威 Cheat 路由清单、根调用规则与排除项位于 `SKILL.md` 核心约束第 1 条。
 
-Do not invoke `cheat-shoot` or `cheat-score-blind` directly from this orchestrator. `cheat-shoot` only belongs to video shooting registration; `cheat-score-blind` must only be invoked internally by Cheat's score, predict, or bump workflow. Topic discovery must invoke root `cheat-on-content` and let it route to `cheat-trends` as the fifth signal lane. Do not simulate these actions from this Skill.
+## 排除能力
 
-## Excluded capabilities
+不得注册或调用 `hv-analysis`、`space-chart-image`、`article-batch-illustration`、`article-cover-and-batch-illustration`、`baoyu-slide-deck`、`neat-freak` 或 `storage-analyzer`。由 `creator-buddy` 自行路由其平台子 Skill，但公众号选题发现必须（MUST）明确请求其 `gzh-explosive-content-detector` 分支。
 
-Do not register or call `hv-analysis`, `space-chart-image`, `article-batch-illustration`, `article-cover-and-batch-illustration`, `baoyu-slide-deck`, `neat-freak`, or `storage-analyzer`. Let `creator-buddy` route its own platform subskills, except that WeChat topic discovery MUST explicitly request its `gzh-explosive-content-detector` branch.
+## 选题信号编排
 
-## Topic signal orchestration
+执行 [`topic-signal-registry.md`](topic-signal-registry.md)；不得在此复述或覆盖其 lane 流程。
 
-Run topic discovery as a fan-in pipeline. Signal providers never make the final topic decision.
+## Cheat 路由
 
-1. Run the `creator-buddy-cross-platform` lane through root `creator-buddy` with the mandatory [`creator-buddy-wechat-override.md`](creator-buddy-wechat-override.md) route override. Xiaohongshu keyword heat MUST use the local `xiaohongshu-skill` route (Playwright, free, no API key); do not silently fall back to `xhs-hotnotes`, `global-content-search`, Agent Reach, RedFox, socialdatax, or Guaikei. Use those other routes only for a separately declared details, comments, or creator-history task after the keyword-heat lane is recorded.
-2. In the same `creator-buddy` run, explicitly run the `gzh-explosive-content-detector` lane for recent WeChat viral samples. If it classifies the input as a generic keyword, stop and obtain the required expansion choice before continuing the pipeline.
-3. For an AI account or AI-related topic, run the `aihot` lane. For other topics, record `not_applicable`; preserve every original URL and treat generated summaries as discovery aids, not verified evidence.
-4. Run the `x-tweet-fetcher` lane for long essays and news cards alike: relevant users' timelines, search results, threads, and long-form articles. Save raw output under `news-cards/<slug>/research/x-raw/` (news cards) or the article research folder (long essays), and register each source in the corresponding `sources.json`.
-5. Invoke root `cheat-on-content` and let it route to the `cheat-trends` lane, using the account's enabled adapters to add broad trend signals. Treat adapter overlap with `aihot` or `creator-buddy` as duplicate coverage, not independent confirmation.
-6. Normalize and deduplicate all five registered lanes before the final Cheat recommendation. Each candidate MUST retain `title`, `source`, `snapshot_text`, `snapshot_at`, and `url` when available. Merge cross-platform coverage of the same event into one candidate while retaining all source records; repeated coverage is not independent confirmation.
-7. Submit the normalized pool to root `cheat-on-content`. Use `cheat-recommend` for a populated candidate pool, `cheat-score` for an existing topic or draft, and `cheat-seed` only when no topic or usable pool exists. Cheat owns scoring and ranking.
-8. Show Cheat's scored recommendation, rationale, anchors, risks, retained source provenance and all five lane statuses. The topic stage remains `awaiting_confirmation` until the user confirms the topic angle.
+使用 `SKILL.md` 核心约束第 1 条中的权威路由清单和根调用规则。账号导入与迁移确认步骤仍位于 `onboarding.md`。
 
-If one signal provider fails, report its missing route or runtime requirement and keep its lane visibly incomplete. Do not fabricate results, silently substitute model memory, or present a partial pool as the full set of applicable signal lanes.
+`cheat-seed` 存在外部通用 `humanizer` 命名不一致。应用
+[`cheat-contracts.md`](cheat-contracts.md#cheat-seed-humanizer-compatibility-register)
+中的登记规则：总控路线只承认 `humanizer-zh`，绝不安装通用替代项，也绝不把 seed 输出当作编辑诊断。
 
-## Cheat routes
+当 `content_form=long-essay` 时，预测还必须具备
+[`cheat-contracts.md`](cheat-contracts.md#cheat-content-form-and-rubric-contract)
+规定的回执。根 Cheat 调用完成与公众号中长文 rubric 兼容是两个独立状态；只有观点视频 rubric 时，`cheat-predict` 不得继续。
 
-- Existing account: status check; migrate only with authorization.
-- Schema migration: `cheat-migrate` only with explicit authorization or after migration in a copied working project; then re-run root `cheat-status` and require the total-control post-migrate receipt before continuing.
-- Benchmark or imported evidence: `cheat-learn-from` for sample-scoped evidence, then obtain separate user confirmation before migrating or importing the sample scope and target Cheat project.
-- New long-term account: initialize as `long-essay`.
-- No topic: `cheat-seed`.
-- Candidate pool choice: `cheat-recommend`.
-- Existing topic or draft: `cheat-score`.
-- Approved final text: `cheat-predict`.
-- Publicly published article: `cheat-publish`.
-- Post-publication data: `cheat-retro`.
-- Audience refresh: `cheat-persona`.
-- Rubric change: `cheat-bump`.
-- Progress: `cheat-status`.
+## 内容策略与学习
 
-`cheat-seed` has an external generic-`humanizer` naming mismatch. Apply the
-[`cheat-seed-compatibility.md`](cheat-seed-compatibility.md) register: the
-total-control route only recognizes `humanizer-zh`, never installs a generic
-replacement, and never treats seed output as an editing diagnostic.
+- 保持 `wechat-article-writing` 为常规入口，以及前置条件、状态、审批与恢复的所有者。
+- 仅在选题与证据包存在后调用 `wechat-content-strategy`。它可以写入 `outline.md` 和当篇文风卡；不得收集未登记事实、起草文章或直接更改文章状态。
+- 保持 `wechat-article-writing` 为起草所有者。写作前读取 `references/writing-style.md` 并锁定文风卡。以 `human-writing` 作为材料充分性、说话者位置、段落推进、自然中文和初稿后修订的必需正文主流程。账号 `voice.md` 与已验证的 profile 规则定义作者声音。起草期间不得调用外部作者文风 Skill。
+- 仅在标准长期 profile 下，且用户明确要求学习后调用 `wechat-style-learning`。它可以更新可选的改稿账本和 `content-patterns.md` 中生成的学习块；不得更改 `voice.md`、文章产物、Cheat 状态或当前审批。
 
-For `content_form=long-essay`, prediction additionally requires the total-control
-[`cheat-form-contract.md`](cheat-form-contract.md) receipt. A completed root
-Cheat call and a compatible WeChat long-essay rubric are separate statuses;
-`cheat-predict` must not proceed with an opinion-video-only rubric.
+## 双平台分发交接
 
-Every init, seed, recommend, score, predict, publish, retro, persona, bump, learn-from, migrate, or status stage MUST invoke the root `cheat-on-content` Skill and let it select its internal workflow. Do not invoke `cheat-score-blind` directly. Do not simulate these actions or reproduce, copy, or approximate its formulas and protocols.
+- 将已解析分发目录中的 `platforms.json` 视为平台启用开关，将 `registry.json` 视为跨平台关联记录。
+- 公众号仍由本 Skill 所有。小红书启用且用户确认具体改编后，调用 `space-xhs-buddy`，由它路由至原生写作、标题和图文 Skill。
+- 只共享已验证事实、源素材与内容核心。不得把公众号终稿复用成小红书终稿，也不得让小红书改动使已批准的公众号产物失效。
+- 各平台分别记录生产、公开确认、数据与校准。
+- 仅启用平台绝不授权发布，也不授权创建逐内容占位目录。
 
-## Content strategy and learning
+## 视觉与 HTML 门禁
 
-- Keep `wechat-article-writing` as the ordinary entrypoint and owner of preconditions, state, approvals, and recovery.
-- Invoke `wechat-content-strategy` only after the selected topic and evidence package exist. It may write `outline.md` and the article's style card; it may not collect untracked facts, draft the article, or change article state directly.
-- Keep `wechat-article-writing` as the drafting owner. Read `references/writing-style.md` before writing, lock the style card, then call `khazix-writer` for bounded craft assistance. Account `voice.md` and validated profile rules define the author voice; article-level parameters refine execution. The assistant must never introduce its own identity, slogans, coarse language, fixed punctuation, fixed word count or fixed ending.
-- Invoke `wechat-style-learning` only for a standard long-term profile after the user explicitly requests learning. It may update the optional edit ledger and generated learning blocks in `content-patterns.md`; it may not change `voice.md`, article artifacts, Cheat state, or current approvals.
-
-## WeChat cover routing
-
-Run `python <SKILL_ROOT>/scripts/dependency_check.py --stage cover`, then invoke root `guizang-social-card-skill` with an explicit one-asset contract:
-
-- Produce exactly one static `21:9` WeChat main cover.
-- Use the full or near-full article title and one strong visual relationship.
-- Do not produce a `1:1` square cover, pair preview, carousel, or Live Photo from the cover route.
-- Record title, material source, layout intent, output path, dimensions, and verification result in `visual-plan.md`.
-- Account visual rules outrank automatic style suggestions.
-
-After the external route returns, the total Skill must run
-`scripts/visual_asset_adapter.py cover` with the route output directory. Only its
-`visuals/assets/cover.<ext>` copy and the shared `visuals/assets/manifest.json` are
-deliverables; a square/pair/Live Photo companion or a non-`21:9` source fails the
-cover route.
-
-Fallback: when suitable photo material is missing, ImageGen may generate the base photo while guizang still composes the typography (material fallback). Only when guizang itself is unavailable may ImageGen produce the entire cover end to end (route fallback). The same one-asset contract applies in both cases, and the fallback must be explicitly flagged in `visual-plan.md` and the delivery notes.
-
-Having no available cover route blocks visual completion. Do not silently replace it with a body-illustration or generic image route, and do not silently fall back without flagging it.
-
-## Dual-rail body illustration routing
-
-For every body cognitive anchor, record route and reason in `visual-plan.md`.
-
-- Choose Ian when the information job is emotion, viewpoint, identity, narrative turn, tension, or an original surreal metaphor and the image does not need exact labels or data.
-- Choose `baoyu-article-illustrator` for ordered steps, hierarchy, comparison, matrix, architecture, timeline, exact labels, or evidence-backed numbers.
-- Exact semantics outrank mood when readers must recover named relations or values from the image.
-- If both jobs matter independently, split them into two anchors. Do not generate both routes for one anchor unless the user explicitly requests A/B.
-- If a passage has no independent information job, create no body image for it.
-- Profile visual rules outrank automatic recommendations.
-
-After Ian or Baoyu returns, run `scripts/visual_asset_adapter.py body` for every
-selected anchor. The adapter is the only accepted copy into
-`visuals/assets/ian/` or `visuals/assets/baoyu/`, and its manifest record must
-include the route, anchor, information job, dimensions, and SHA256.
-
-Run `python <SKILL_ROOT>/scripts/dependency_check.py --stage visual` before planning. Then run the matching route preflight for each selected anchor: `visual-ian` for Ian, `visual-structured` for Baoyu. Treat `optional_missing: ["imagegen"]` as an informational hint and let the selected route resolve the actual runtime image backend. A missing route Skill or a route that cannot resolve any backend blocks that asset; do not silently substitute a route that changes the information job.
-
-## HTML completion gate
-
-HTML is not complete until root `gzh-design` has produced and validated the WeChat HTML and preview. An alias may resolve the installed Skill name, but it does not weaken this gate.
+执行 [`quality-gates.md`](quality-gates.md) 中的视觉与 HTML 门禁；本路由注册表不重复其约束。

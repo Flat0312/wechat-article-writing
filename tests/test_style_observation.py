@@ -116,16 +116,30 @@ class StyleObservationTests(unittest.TestCase):
 
 
 class StyleContractTests(unittest.TestCase):
-    def test_khazix_is_assistant_not_author_voice(self):
+    def test_human_writing_is_primary_but_not_author_voice(self):
         routing = (SKILL_ROOT / "references" / "skill-routing.md").read_text(
             encoding="utf-8"
         )
         style = (SKILL_ROOT / "references" / "writing-style.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Required craft assistant", routing)
-        self.assertIn("不是作者人格", style)
-        self.assertNotIn("khazix-writer` as the sole author voice", routing)
+        self.assertIn("必需的活人感正文主流程", routing)
+        self.assertIn("每篇中长文必需的主要写作增强", style)
+        self.assertIn("不创建作者画像", style)
+
+    def test_khazix_writer_is_not_routed(self):
+        routing = (SKILL_ROOT / "references" / "skill-routing.md").read_text(
+            encoding="utf-8"
+        )
+        style = (SKILL_ROOT / "references" / "writing-style.md").read_text(
+            encoding="utf-8"
+        )
+        dependencies = (SKILL_ROOT / "scripts" / "dependency_check.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("khazix-writer", routing)
+        self.assertNotIn("khazix-writer", style)
+        self.assertNotIn("khazix-writer", dependencies)
 
     def test_continuous_learning_contract_is_documented(self):
         skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")

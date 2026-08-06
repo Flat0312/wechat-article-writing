@@ -13,7 +13,6 @@ sys.path.insert(0, str(SKILL_ROOT / "scripts"))
 
 import article_state
 import cheat_form_adapter
-import craft_only_adapter
 import humanizer_diagnostic_adapter
 import visual_asset_adapter
 import validate_project
@@ -25,20 +24,16 @@ EXPECTED_EXTERNAL = {
     "creator-buddy",
     "gzh-explosive-content-detector",
     "aihot",
-    "khazix-writer",
     "humanizer-zh",
     "guizang-social-card-skill",
     "ian-xiaohei-illustrations",
     "baoyu-article-illustrator",
     "gzh-design",
-    "x-tweet-fetcher",
 }
 EXPECTED_LANES = {
-    "creator-buddy-cross-platform",
+    "creator-buddy-xiaohongshu",
     "gzh-explosive-content-detector",
     "aihot",
-    "x-tweet-fetcher",
-    "cheat-trends",
 }
 
 
@@ -75,27 +70,20 @@ class ExternalContractFixtureTests(unittest.TestCase):
             )
             _assert_portable_paths(self, contract)
 
-    def test_fixture_declares_all_five_topic_lanes(self):
+    def test_fixture_declares_core_topic_lanes(self):
         contracts = _load_fixture()["contracts"]
         lanes = {
             contracts["creator-buddy"]["input"]["lane"],
             contracts["gzh-explosive-content-detector"]["input"]["lane"],
             contracts["aihot"]["input"]["lane"],
-            contracts["x-tweet-fetcher"]["input"]["lane"],
-            "cheat-trends",
         }
         self.assertEqual(lanes, EXPECTED_LANES)
         override = contracts["creator-buddy"]["input"]["route_override"]
-        self.assertEqual(override["provider"], "xiaohongshu-skill")
-        self.assertFalse(override["allow_fallback"])
+        self.assertEqual(override["provider"], "global-content-search")
+        self.assertTrue(override["allow_fallback"])
 
     def test_writing_and_form_fixtures_pass_total_control_adapters(self):
         contracts = _load_fixture()["contracts"]
-        self.assertTrue(
-            craft_only_adapter.validate_payload(
-                contracts["khazix-writer"]["output"]
-            )["accepted_for_integration"]
-        )
         with tempfile.TemporaryDirectory() as temp:
             draft = Path(temp) / "draft.md"
             draft.write_text("# Draft\n\nLocal text.\n", encoding="utf-8")
