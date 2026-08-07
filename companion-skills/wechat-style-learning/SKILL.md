@@ -1,6 +1,6 @@
 ---
 name: wechat-style-learning
-description: Learn compact, reusable WeChat writing rules from confirmed human-edited draft/final pairs and continuously observe approved final drafts in a standard long-term account profile. Use when the user asks to learn, persist, or continuously evolve writing style; keep final-only observations provisional and preview promotion candidates before changing hard voice rules.
+description: Learn WeChat writing rules from confirmed draft/final pairs; observe approved finals. Use when user asks to 学习人工改稿、沉淀或持续进化文风；终稿观察仅作临时候选，晋级 voice 规则前须先预览确认。
 ---
 
 # WeChat Style Learning

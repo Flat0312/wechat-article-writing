@@ -55,19 +55,3 @@ python <SKILL_ROOT>/scripts/validate_project.py article <PROJECT_ROOT>
 改动正文文字才能修复，按 `recovery-rules.md` 从 `final` 阶段失效并重新完成审批及
 下游流程；不得在已批准正文或已锁定预测之后静默改字。
 
-## 预测门禁
-
-只有已批准终稿可以进入 Cheat 预测。`final` 审批必须（MUST）绑定当前终稿产物，且 `approvals.final.artifact_sha256` 必须（MUST）等于 `artifacts.final.sha256`；否则预测前重新取得用户确认。对 `content_form=long-essay`，先用 `scripts/cheat_form_adapter.py` 验证 `cheat-form-receipt.json`：`root_call_status=completed` 与 `rubric_status=compatible` 是两个分别必需的事实。默认观点视频 rubric 或 `rubric_form_mismatch=true` 会阻塞预测。调用根 `cheat-on-content` 执行预测；不得模拟或近似。不得向盲评分路线暴露实际表现、复盘、受众表现信号或其他禁用材料。绝不得覆盖不可变预测。
-
-中长文路径通过 [`references/cheat-contracts.md`](cheat-contracts.md#long-essay-cheat-prediction-bridge) 创建 Cheat 兼容脚本。该适配器是把 `drafts/final.md` 复制到 Cheat `scripts/` 输入命名空间的唯一支持方式；审批哈希缺失或不匹配时，必须在写入任何快照前失败。`prediction-input-reference.json` 只是输入回执，绝不替代真实 `cheat-predict` 调用。
-
-## 视觉门禁
-
-先运行 `cover` 依赖预检，再调用根 `guizang-social-card-skill`。使用完整或接近完整的文章标题与一个强视觉关系，只生成一张静态 `21:9` 微信主封面。账号视觉规则优先于自动建议。明确禁止 `.poster.square`、`1:1` 成对输出、成对预览、轮播、Live Photo 和视频。把标题、素材来源、布局意图、输出路径、尺寸与验证结果记录到 `visual-plan.md`。
-
-每个正文认知锚点都必须承担一个独立信息任务，并在 `visual-plan.md` 记录路线和理由。无需精确标签或数据时，情绪、观点、身份、叙事转折、张力或原创超现实隐喻选择 Ian；有序步骤、层级、对比、矩阵、架构、时间线、精确标签或有数据支持的数字选择 `baoyu-article-illustrator`。精确语义优先于氛围。独立任务拆成不同锚点；段落没有信息任务就不出图；除非用户明确要求 A/B，否则同一锚点绝不得双路线生成。Profile 视觉规则优先于自动推荐。
-
-## HTML 门禁
-
-调用根 `gzh-design` 时，把上述微信长文排版契约作为明确的硬约束，并应用 [`references/external-contracts.md`](external-contracts.md#gzh-design-author-cta-override) 的 CTA 策略。使用微信兼容的行内样式。验证每项图片引用、图片尺寸和必需资产。运行仓库文章验证器并清除每个强制错误，同时清除 `gzh-design` 的每个强制错误。用户未提供作者块或 CTA 偏好时，记录 `author_cta: disabled` 并删除默认署名/CTA；否则记录 `author_cta: explicit`，且只保留用户提供的文字。
-

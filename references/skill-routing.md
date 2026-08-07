@@ -53,7 +53,7 @@
 
 - 保持 `wechat-article-writing` 为常规入口，以及前置条件、状态、审批与恢复的所有者。
 - 仅在选题与证据包存在后调用 `wechat-content-strategy`。它可以写入 `outline.md` 和当篇文风卡；不得收集未登记事实、起草文章或直接更改文章状态。
-- 保持 `wechat-article-writing` 为起草所有者。写作前读取 `references/writing-style.md` 并锁定文风卡。以 `human-writing` 作为材料充分性、说话者位置、段落推进、自然中文和初稿后修订的必需正文主流程。账号 `voice.md` 与已验证的 profile 规则定义作者声音。起草期间不得调用外部作者文风 Skill。
+- 保护 `wechat-article-writing` 为起草所有者。写作前读取 `references/writing-style.md` 并锁定文风卡。以 `human-writing` 作为材料充分性、说话者位置、段落推进、自然中文和初稿后修订的必需正文主流程，账号 `voice.md` 与已验证的 profile 与它同权重并列作用于起草；任一方都不整段覆盖另一方。起草期间不得调用外部作者文风 Skill。
 - 仅在标准长期 profile 下，且用户明确要求学习后调用 `wechat-style-learning`。它可以更新可选的改稿账本和 `content-patterns.md` 中生成的学习块；不得更改 `voice.md`、文章产物、Cheat 状态或当前审批。
 
 ## 双平台分发交接

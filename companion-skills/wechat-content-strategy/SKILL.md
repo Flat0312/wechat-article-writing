@@ -1,6 +1,6 @@
 ---
 name: wechat-content-strategy
-description: Build an evidence-bound WeChat Official Account long-essay outline or news-card outline after the topic angle and research package are confirmed. Use when wechat-article-writing needs content enhancement, a central thesis, section responsibilities, writing parameters, evidence placement, fact boundaries, editing anchors, or a five-element AI/technology news-card plan.
+description: Use when wechat-article-writing needs 内容增强、中心论点、章节职责、写作参数、证据位置、事实边界、编辑锚点，或五要素 AI/科技资讯贴图大纲、长文大纲（选题与调研确认后）。
 ---
 
 # WeChat Content Strategy
@@ -108,7 +108,8 @@ description: Build an evidence-bound WeChat Official Account long-essay outline 
 动作，也不得把外部作者身份、口癖、粗口、固定标点、固定字数或固定结尾写入卡片。
 
 文风执行卡完成后，交还总控调用必需的 `human-writing` 做活人感主执行；本 Skill
-不直接采用外部 Skill 原文，不允许通用规则覆盖账号声音或新增素材。
+不直接采用外部 Skill 原文，不允许通用规则覆盖账号声音或新增素材。账号声音与
+`human-writing` 的活人感执行同权重并列，任何一方都不整段覆盖另一方。
 
 ### 6. 设计章节
 

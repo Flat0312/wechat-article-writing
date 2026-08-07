@@ -85,13 +85,3 @@ python <WECHAT_ARTICLE_ROOT>/scripts/validate_project.py profile <账号目录>
 本 Skill 内部实现，不向伴生 Skill 承诺稳定；伴生 Skill 不得直接 import
 这些模块，只能调用上面的 CLI。
 
-## 第三步：建立状态
-
-账号迁移后先完成 `cheat-status`；schema 不兼容时取得授权后再迁移。执行 `cheat-migrate` 后按 [`references/cheat-contracts.md`](cheat-contracts.md#post-migrate-cheat-status-receipt) 生成并验证 `<账号目录>/cheat-status-receipt.json`；缺失或失败时停止导入。
-
-## 第四步：执行文章流水线
-
-选题：执行 [`references/topic-signal-registry.md`](topic-signal-registry.md) 并确认角度 → `topic-brief.md`。
-预测：先验证 `cheat-form-receipt.json`（根 Cheat 完成且 rubric 已适配），再运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，调用根 Cheat 的 predict → `prediction-input-reference.json`。
-发布：用户确认公开后先真实调用根 Cheat 的 publish，再运行总控发布桥写入 `publish-reference.json`。Cheat 的公开路由、根调用与排除规则只见 `SKILL.md` 核心约束第 1 条。
-

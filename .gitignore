@@ -12,3 +12,4 @@ Thumbs.db
 bindings.local.json
 *.local.json
 *.log
+.workbuddy/
