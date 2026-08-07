@@ -14,14 +14,14 @@
 | `humanizer-zh` | 可选的 AI 痕迹诊断 | 仅在事实、结构和账号声音稳定后，按 [`external-contracts.md`](external-contracts.md#humanizer-diagnostic-contract) 运行；选择性接受局部建议，绝不替换全文 |
 | `wechat-content-strategy` | 证据约束的内容增强、提纲、写作参数、文风卡与编辑锚点 | 主题和证据就绪后、第一方起草前必须调用 |
 | `wechat-style-learning` | 长期账号的已确认改稿学习 | 仅在用户明确要求从改稿学习时调用，并且只在确认后持久化 |
-| `guizang-social-card-skill` | 微信封面合成 | 遵循 `quality-gates.md` 的视觉门禁 |
-| `ian-xiaohei-illustrations` | 正文配图路线 | 遵循 `quality-gates.md` 的视觉门禁 |
-| `baoyu-article-illustrator` | 正文配图路线 | 遵循 `quality-gates.md` 的视觉门禁 |
-| `imagegen` | 可选的 Codex 图片 Skill | 仅可在 `quality-gates.md` 的视觉门禁下使用 |
-| `gzh-design` | 微信 `<section>` HTML 与平台校验 | 遵循 `quality-gates.md` 的 HTML 门禁；接受别名 `gzh-design-skill` |
+| `guizang-social-card-skill` | 微信封面合成 | 仅 news-card 路径；遵循 `quality-gates.md` 的视觉门禁 |
+| `ian-xiaohei-illustrations` | 正文配图路线 | 仅 news-card / schema 1.0 长文；schema 1.1 长文不调 |
+| `baoyu-article-illustrator` | 正文配图路线 | 仅 news-card / schema 1.0 长文；schema 1.1 长文不调 |
+| `imagegen` | 可选的 Codex 图片 Skill | 仅 news-card / schema 1.0 长文兜底 |
+| `gzh-design` | 微信 `<section>` HTML 与平台校验 | 仅 schema 1.0 历史长文；schema 1.1 不调；接受别名 `gzh-design-skill` |
 | `space-xhs-buddy` | 已确认内容的小红书原生交接 | 仅在项目启用小红书且用户确认具体改编时使用；应路由到写作、标题、图文专项 Skill，不得复制公众号终稿 |
 
-封面、正文配图和 HTML 规则以 [`quality-gates.md`](quality-gates.md) 为唯一来源。
+封面、正文配图和 HTML 规则以 [`quality-gates.md`](quality-gates.md) 为唯一来源；schema 1.1 中长文不在该规则覆盖范围（不调 `gzh-design`、不依赖封面/正文配图）。
 选题 lane 名称、适用性、状态、候选字段与编排以
 [`topic-signal-registry.md`](topic-signal-registry.md) 为唯一来源。
 
@@ -66,4 +66,10 @@
 
 ## 视觉与 HTML 门禁
 
-执行 [`quality-gates.md`](quality-gates.md) 中的视觉与 HTML 门禁；本路由注册表不重复其约束。
+执行 [`quality-gates.md`](quality-gates.md) 中的视觉与 HTML 门禁；本路由注册表不重复其约束。schema 1.1 中长文跳过视觉 / HTML 关卡（不调 `gzh-design`、不生成 `output/article.html`），仅在 schema 1.0 项目中保留该门禁以供历史回放。news-card 路径按其独立 21:9 单图规则执行。
+
+## 中长文纯文字交付
+
+- schema 1.1 长文：依赖 `cheat-on-content`、`wechat-content-strategy`、`human-writing`；不调 `gzh-design`、不依赖 `ian-xiaohei-illustrations` / `baoyu-article-illustrator`、不生成 `output/article.html`。
+- `text-only-long-essay` 阶段以这三个 Skill 为必需；详见 [`dependency_check.py` STAGE_RULES](../scripts/dependency_check.py)。
+- 用户单独明确要图时另走视觉请求（news-card 或独立 `imagegen` 兜底），图永远不是文字交付或发布登记的前置。

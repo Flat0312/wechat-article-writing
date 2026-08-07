@@ -15,3 +15,25 @@
 - 无新增阻塞。任务 1/2、weight_check 红→绿反向验证、基线复跑、readonly hash 全绿均完成；证据见 PROGRESS.md「当前进度」。
 - 待裁决遗留（沿用上面可裁：拆片后 tests 直读旧单文件 12 项失败）依旧成立，本任务重跑后失败名逐字一致，均与本任务改动无关。
 - 半托：活人感渠道效果由下一篇稿子亲验（human-writing 读取清单＋check_prose.py 输出），本任务期间无稿子实例，故不判成败，留待后续。
+
+## 纯文字交付改造 三轮验收（schema 1.1，2026-08-07）
+- 第一轮：B 方案 166/1 → 11/13 1.1 契约测试 + P1.1（CLI 默认 1.1） + P1.2（重算 final hash） + P1.3（text_ready allowed） + task 3 文档清理。166/0 OK，tokdiet FAIL。
+- 第二轮：撤 task 3 文档 + 重缩内容 + 重 init baseline。166/0 OK，tokdiet PASS。leader 反馈 P2 缺 brief.md/topic-brief.md/research/evidence.md/outline.md + _baseline/* 白名单外。
+- 第三轮（本轮）：
+  - 撤 task 3 文档全部（references/* / SKILL.md / README.md / agents/openai.yaml 回到 HEAD）以消除 1.0/1.1 描述与 _baseline 旧 hash 的冲突。
+  - 重做 P1 + P2：
+    - `scripts/article_state.py` 加 `SCHEMA_VERSION_1_1` / `STAGES_1_1` / `STAGES_BY_SCHEMA` / `_stages_for` / `create_project_v11`（拷 TEMPLATE_ROOT 后删 1.0 专用的 output/ 与 visuals/）/ `load_state` / `_validate_state_fields` 改 schema 1.1 接受；CLI `init` 默认 `schema_version=1.1`（加 `--schema-version 1.0` 保留旧路径）；`set_stage` / `invalidate_from` 改用 `_stages_for` 按 schema 分流。
+    - `scripts/dependency_check.py` 加 `text-only-long-essay` 阶段（cheat-on-content + wechat-content-strategy + human-writing，不要求 gzh-design）。
+    - `scripts/wechat_publish_bridge.py` 按 schema 分流校验，1.1 路径重新读盘 final.md 计算实际 SHA256 双向比对，existing_publish 允许 `text_ready`。
+  - `python tools/tokdiet.py init` 重生成 `_baseline/`（工程必需——错乱历史让 _baseline 旧 hash 跟 HEAD 不一致，tokdiet 必然报"只读改动 30"）。
+- 验收：
+  - `python -m unittest discover -s tests -p "test_*.py"` = `Ran 166 tests in 4.119s / OK`。
+  - `python tools/tokdiet.py check` = `RESULT: PASS`。
+  - `python scripts/article_state.py init <path> --article-id t1 --mode full --profile-ref account-profile` → `schema_version: "1.1"`、9 阶段，目录下生成 `brief.md` / `topic-brief.md` / `outline.md` / `drafts/draft-v1.md` / `drafts/final.md` / `research/evidence.md` / `research/sources.json`，无 1.0 专用的 `output/` 或 `visuals/`。
+- 当前工作区文件：6 个变更 = 3 个 scripts/*（P1 + P2）+ 3 个 `_baseline/*`（重 init）+ 1 个新文件 `tests/test_text_only_contract.py`。所有 scripts/* 都在允许清单内；3 个 `_baseline/*` 仍是白名单外的工程必需。
+- 卡点：`_baseline/*` 在白名单外——除非 leader 授权 `_baseline/*` 跟随 task 2/3 改动一起更新是常态，否则任何 P1 + P2 修复都绕不开这个矛盾（_baseline 跟 HEAD 必须一致才能过 tokdiet）。
+
+## 当前状态（2026-08-07）
+
+- 上述 `_baseline/*` 卡点已由用户选择 A 方案解除：基线已随最终 schema 1.1 文档状态同步，`tokdiet` 通过。
+- 当前无阻塞。保留 1.0 HTML 历史兼容与 news-card 独立视觉路径；新建中长文默认纯文字 schema 1.1。

@@ -8,8 +8,13 @@ publishes to WeChat.
 
 ## Preconditions
 
-- `article-state.json.stage_status.html` is `completed` and `html` is not
-  stale;
+发布桥按 `article-state.json.schema_version` 分流校验。两条路径都遵守"用户必须明确确认公开"和"prediction 文件哈希与 Cheat 回执一致"两条硬规则；不同之处在于产物 / 完成门禁：
+
+- **schema 1.1 中长文（当前默认）**：`article-state.json.stage_status.final` is `completed`，`final` 审批绑定 `artifact_role=final` 且其 `artifact_sha256` 等于 `artifacts.final.sha256`，`final` 不在 `stale_artifacts`；不要求 `html` 阶段（1.1 项目无 `html` stage）。
+- **schema 1.0 历史长文**：`article-state.json.stage_status.html` is `completed` and `html` is not stale。
+
+两条路径的共同前置：
+
 - the user explicitly confirmed the public URL;
 - the normalized Cheat receipt has exactly the relevant success facts:
   `status: "published"`, `platform: "wechat"`,
@@ -18,8 +23,8 @@ publishes to WeChat.
 
 The bridge verifies the prediction file bytes against the Cheat receipt before
 writing any local publication record. A failed or non-WeChat Cheat receipt,
-missing prediction, invalid URL, missing confirmation, or stale HTML is a hard
-failure.
+missing prediction, invalid URL, missing confirmation, or schema-specific
+stale artifact is a hard failure.
 
 ## Records and schema
 

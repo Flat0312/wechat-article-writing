@@ -12,6 +12,8 @@ import tempfile
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_ROOT = SKILL_ROOT / "assets" / "article-project-template"
+SCHEMA_VERSION_1_0 = "1.0"
+SCHEMA_VERSION_1_1 = "1.1"
 STAGES = (
     "brief",
     "topic",
@@ -26,6 +28,25 @@ STAGES = (
     "publish",
     "retro",
 )
+STAGES_1_1 = (
+    "brief",
+    "topic",
+    "evidence",
+    "outline",
+    "draft",
+    "final",
+    "prediction",
+    "publish",
+    "retro",
+)
+STAGES_BY_SCHEMA = {
+    SCHEMA_VERSION_1_0: STAGES,
+    SCHEMA_VERSION_1_1: STAGES_1_1,
+}
+
+
+def _stages_for(state):
+    return STAGES_BY_SCHEMA.get(state.get("schema_version"), STAGES)
 ALLOWED_STATUS = {
     "pending",
     "in_progress",
@@ -104,8 +125,17 @@ def _logical_cheat_binding(value: str | None) -> str | None:
 
 
 def _validate_state_fields(state: dict[str, object]) -> None:
-    if state.get("schema_version") != "1.0":
-        raise ValueError("article state schema_version must be 1.0")
+    schema_version = state.get("schema_version")
+    if schema_version not in STAGES_BY_SCHEMA:
+        raise ValueError(
+            f"article state schema_version must be one of {sorted(STAGES_BY_SCHEMA)}"
+        )
+    expected_stages = STAGES_BY_SCHEMA[schema_version]
+    status_keys = set((state.get("stage_status") or {}).keys())
+    if status_keys and status_keys != set(expected_stages):
+        raise ValueError(
+            f"stage_status keys must match schema {schema_version} stages"
+        )
     unknown = set(state) - STATE_FIELDS
     if unknown:
         has_secret_like = any(
@@ -125,6 +155,14 @@ def _validate_state_fields(state: dict[str, object]) -> None:
         raise ValueError("profile_ref in article state must use POSIX separators")
     if _logical_cheat_binding(state["cheat_binding"]) != state["cheat_binding"]:
         raise ValueError("cheat_binding in article state must be a logical identifier")
+
+
+def load_state(project: Path) -> dict[str, object]:
+    project = Path(project).resolve()
+    state_path = project / "article-state.json"
+    payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
+    _validate_state_fields(payload)
+    return payload
 
 
 def write_state(project: Path, state: dict[str, object]) -> None:
@@ -210,6 +248,59 @@ def create_project(
             shutil.rmtree(temporary_root, ignore_errors=True)
 
 
+def create_project_v11(
+    project: Path,
+    article_id: str,
+    mode: str,
+    profile_ref: str | None,
+    cheat_binding: str | None = None,
+) -> dict[str, object]:
+    profile_ref = _portable_profile_ref(profile_ref)
+    cheat_binding = _logical_cheat_binding(cheat_binding)
+    project = Path(project).expanduser().resolve()
+    if project.exists():
+        raise FileExistsError(project)
+    project.parent.mkdir(parents=True, exist_ok=True)
+
+    temporary_root = Path(
+        tempfile.mkdtemp(prefix=f".{project.name}.tmp-", dir=project.parent)
+    ).resolve()
+    if temporary_root.parent != project.parent:
+        raise RuntimeError("temporary article root escaped the project parent")
+    staging = temporary_root / "article"
+    try:
+        shutil.copytree(TEMPLATE_ROOT, staging)
+        # schema 1.1 不走 HTML 五件套 / 视觉轨道，删除模板中仅 1.0 使用的
+        # output/ 与 visuals/ 顶层目录，避免给新项目制造空的 1.0 资产骨架。
+        shutil.rmtree(staging / "output", ignore_errors=True)
+        shutil.rmtree(staging / "visuals", ignore_errors=True)
+        now = _now()
+        state: dict[str, object] = {
+            "schema_version": SCHEMA_VERSION_1_1,
+            "article_id": article_id,
+            "mode": mode,
+            "profile_ref": profile_ref,
+            "cheat_binding": cheat_binding,
+            "current_stage": "brief",
+            "stage_status": {stage: "pending" for stage in STAGES_1_1},
+            "artifacts": {},
+            "approvals": {},
+            "skill_routes": {},
+            "stale_artifacts": [],
+            "required_actions": [],
+            "created_at": now,
+            "updated_at": now,
+        }
+        write_state(staging, state)
+        if project.exists():
+            raise FileExistsError(project)
+        staging.rename(project)
+    finally:
+        if temporary_root.parent == project.parent:
+            shutil.rmtree(temporary_root, ignore_errors=True)
+    return state
+
+
 def file_hash(path: Path) -> str:
     digest = sha256()
     with path.open("rb") as handle:
@@ -279,7 +370,7 @@ def record_artifact(
 def set_stage(
     state: dict[str, object], stage: str, status: str
 ) -> dict[str, object]:
-    if stage not in STAGES:
+    if stage not in _stages_for(state):
         raise ValueError(f"unknown stage: {stage}")
     if status not in ALLOWED_STATUS:
         raise ValueError(f"unknown status: {status}")
@@ -323,9 +414,10 @@ def record_route(
 
 
 def invalidate_from(state: dict[str, object], stage: str) -> dict[str, object]:
-    if stage not in STAGES:
+    stages = _stages_for(state)
+    if stage not in stages:
         raise ValueError(f"unknown stage: {stage}")
-    invalidated_stages = set(STAGES[STAGES.index(stage) :])
+    invalidated_stages = set(stages[stages.index(stage) :])
     state["approvals"] = {
         key: approval
         for key, approval in state["approvals"].items()
@@ -337,8 +429,8 @@ def invalidate_from(state: dict[str, object], stage: str) -> dict[str, object]:
             )
         )
     }
-    start = STAGES.index(stage) + 1
-    for downstream in STAGES[start:]:
+    start = stages.index(stage) + 1
+    for downstream in stages[start:]:
         has_artifact = downstream in state["artifacts"]
         if state["stage_status"].get(downstream) == "completed" or has_artifact:
             state["stage_status"][downstream] = "stale"
@@ -348,7 +440,7 @@ def invalidate_from(state: dict[str, object], stage: str) -> dict[str, object]:
         ):
             state["stale_artifacts"].append(downstream)
     if (
-        "prediction" in STAGES[start:]
+        "prediction" in stages[start:]
         and "create_new_prediction_version" not in state["required_actions"]
     ):
         state["required_actions"].append("create_new_prediction_version")
@@ -362,11 +454,16 @@ def main() -> int:
     init.add_argument("project", type=Path)
     init.add_argument("--article-id", required=True)
     init.add_argument("--mode", choices=("full", "fast", "temporary"), required=True)
+    init.add_argument(
+        "--schema-version",
+        choices=(SCHEMA_VERSION_1_1, SCHEMA_VERSION_1_0),
+        default=SCHEMA_VERSION_1_1,
+    )
     init.add_argument("--profile-ref")
     init.add_argument("--cheat-binding")
     stage = subparsers.add_parser("set-stage")
     stage.add_argument("project", type=Path)
-    stage.add_argument("--stage", choices=STAGES, required=True)
+    stage.add_argument("--stage", choices=STAGES + STAGES_1_1, required=True)
     stage.add_argument("--status", choices=sorted(ALLOWED_STATUS), required=True)
     approve = subparsers.add_parser("approve")
     approve.add_argument("project", type=Path)
@@ -383,16 +480,25 @@ def main() -> int:
     record.add_argument("--path", type=Path, required=True)
     invalidate = subparsers.add_parser("invalidate")
     invalidate.add_argument("project", type=Path)
-    invalidate.add_argument("--stage", choices=STAGES, required=True)
+    invalidate.add_argument("--stage", choices=STAGES + STAGES_1_1, required=True)
     args = parser.parse_args()
     if args.command == "init":
-        state = create_project(
-            args.project,
-            args.article_id,
-            args.mode,
-            args.profile_ref,
-            args.cheat_binding,
-        )
+        if args.schema_version == SCHEMA_VERSION_1_1:
+            state = create_project_v11(
+                args.project,
+                args.article_id,
+                args.mode,
+                args.profile_ref,
+                args.cheat_binding,
+            )
+        else:
+            state = create_project(
+                args.project,
+                args.article_id,
+                args.mode,
+                args.profile_ref,
+                args.cheat_binding,
+            )
     else:
         state_path = args.project / "article-state.json"
         state = json.loads(state_path.read_text(encoding="utf-8"))

@@ -1,9 +1,9 @@
 # WeChat Article Writing
 
 <p align="center">
-  <b>面向 Codex 的微信公众号长文 + 资讯贴图总控 Skill</b><br>
-  把账号上下文、选题、事实核查、内容策略、写作、审校、配图、公众号 HTML 排版、
-  发布登记与复盘，组织成一条可验证的工作流。
+  <b>面向 Codex 的微信公众号中长文（纯文字交付）+ 资讯贴图总控 Skill</b><br>
+  把账号上下文、选题、事实核查、内容策略、写作、审校、终稿落盘、Cheat 预测、
+  发布登记与复盘，组织成一条可验证的工作流；资讯贴图走独立 21:9 头图分支。
 </p>
 
 <p align="center">
@@ -24,13 +24,11 @@
 | 初稿 | 账号文风执行卡 + `human-writing` 活人感主执行 | `drafts/draft-v1.md` |
 | 审校 | `human-writing` 改稿检查 + 事实、结构、账号声音、去 AI 痕迹 | `drafts/final.md` |
 | 预测 | Cheat 盲预测（immutable） | `predictions/` |
-| 视觉 | 21:9 头图 + Ian/Baoyu 配图 | `visuals/` |
-| 排版 | `gzh-design` + 九项排版契约 | `output/article.html` |
-| 发布 | 人工复制，公开后登记 | `publish.json` |
+| 发布 | 人工复制 final，公开后登记 | `publish.json` |
 | 复盘 | Cheat T+2 数据回收 | retro 段 |
 
-每一步都有明确的状态、审批和失效传播，绿测试不等于已交付——发布前的浏览器粘贴
-验证和发布后的数据复盘都不可省略。
+每一步都有明确的状态、审批和失效传播，绿测试不等于已交付——schema 1.1 中长文交付以
+`final.md` 落盘 + final 审批绑定 + 用户明确确认为准；旧 schema 1.0 项目保留原 HTML 五件套交付路径。
 
 ## 核心特点
 
@@ -38,9 +36,9 @@
 - **先事实后文风**：不新增用户未提供的经历、数字、案例或立场。
 - **文风可进化**：账号声音由 `voice.md` 与已验证规则和 `human-writing` 同权重共同执行，`human-writing` 承担主要活人感和自然中文；启用持续学习后，每篇批准终稿都会进入软观察层。
 - **八路选题信号**：小红书、公众号爆款、AI HOT、B站、抖音、知乎、微博、头条；每路保留实际后端或明确缺失状态。
-- **两种内容形态**：原创长文与 AI/科技资讯贴图，同级但独立校准。
-- **微信排版契约**：21:9 头图、窄屏断行、字号字色、九项排版检查全部可执行。
-- **发布边界清晰**：只走人工复制已验证 HTML，不碰草稿箱 API；公开后才允许登记与复盘。
+- **两种内容形态**：原创长文（schema 1.1 纯文字九阶段）与 AI/科技资讯贴图（news-card 21:9 单图），同级但独立校准、独立交付。
+- **中长文纯文字交付**：不再默认生成封面、正文配图或 HTML；用户单独明确要图时另走视觉请求。
+- **发布边界清晰**：只走人工复制已验证 final.md，不碰草稿箱 API；公开后才允许登记与复盘。
 
 ## 安装
 
@@ -87,11 +85,11 @@ New-Item -ItemType Junction `
 - `creator-buddy`（含 `gzh-explosive-content-detector`）— 跨平台与公众号爆款信号
 - `global-content-search` — 小红书热点、详情与评论（Agent Reach OpenCLI，复用用户明确控制的 Chrome 会话）
 - `aihot` — AI 主题信号
-- `guizang-social-card-skill` — 21:9 头图合成
-- `ian-xiaohei-illustrations` / `baoyu-article-illustrator` — 正文配图
-- `gzh-design` — 公众号 HTML 排版
-- `imagegen`（可选）— 封面照片素材兜底或路由兜底
+- `guizang-social-card-skill` — news-card 21:9 头图合成
+- `ian-xiaohei-illustrations` / `baoyu-article-illustrator` — news-card 内部视觉素材（长文 schema 1.1 不再走）
+- `imagegen`（可选）— news-card 封面照片素材兜底或路由兜底
 
+schema 1.0 项目仍可走原 HTML 排版路径（`gzh-design`），仅作历史兼容保留，不再用于新中长文。
 完整的阶段依赖和安装提示见 [references/execution.md](references/execution.md)。
 系统还需要 Git 和 Python 3。
 
@@ -100,6 +98,7 @@ New-Item -ItemType Junction `
 ```powershell
 python -m unittest discover -s tests -v
 python scripts/dependency_check.py --stage account
+python scripts/dependency_check.py --stage text-only-long-essay
 ```
 
 依赖检查反映本机安装状态；未安装可选或阶段依赖时，检查会明确列出缺失项。
@@ -108,7 +107,8 @@ python scripts/dependency_check.py --stage account
 
 - 导入账号默认只读，不复制认证目录、Cookie、密钥、缓存或机器绝对路径。
 - 不调用微信公众号草稿箱上传接口或自动发布接口。
-- `html_ready` 只表示 HTML 已可供人工复制，不代表文章已经上传或公开发布。
+- schema 1.1 中长文：`final.md` 落盘 + final 审批绑定 + 用户明确确认后才能登记 `publish.json`；不调 gzh-design、不生成 HTML。
+- schema 1.0 项目：`html_ready` 仅作历史状态保留，文章已发布以 `publish.json.status=publicly_published` 为准。
 - 第三方 Skill 是运行时依赖，许可证和使用条款以各自项目为准。
 
 ## 项目结构

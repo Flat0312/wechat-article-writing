@@ -1,3 +1,7 @@
+## 视觉门禁（schema 1.0 历史长文 / news-card 路径）
+
+> **schema 1.1 中长文不读本节、不执行本节门禁**——1.1 不生成封面、不生成正文配图。news-card 仍按本节执行其 21:9 单图契约，schema 1.0 历史长文回放亦可读本节。
+
 ## 视觉门禁
 
 缺少合适照片素材时，ImageGen 可以生成底图，仍由 Guizang 合成排版（素材兜底）。只有 Guizang 本身不可用时，ImageGen 才可端到端生成整张封面（路线兜底）。两种兜底都保持同一单资产契约，并且必须（MUST）在 `visual-plan.md` 和交付说明中标记。把完整路线输出传入 `scripts/visual_asset_adapter.py cover`；它要求恰好一张静态位图，拒绝所有禁用 companion，验证 `21:9`，并且只把 `visuals/assets/cover.<ext>` 复制进交付 manifest。适配器失败会使该路线不可用。没有可用封面路线会阻塞视觉完成；绝不得静默替换成正文或通用图片路线。
@@ -13,7 +17,9 @@
 
 不得为用户材料编造 URL。不得把个人或自有记录中的值泛化成市场、群体、产品或其他普遍事实。图片提示词和生成工具不得编造、估算、装饰或静默修改数据。若两条证据路径都无法在允许范围内支持数值标签，删除该标签，或把正文视觉替换为非数据插图。
 
-选择 Baoyu 路线前，终稿必须（MUST）按当前 SHA256 登记并批准。运行 `scripts/baoyu_adapter.py prepare`，只把 `visuals/assets/baoyu/source.md` 传给根 Skill，再运行 `scripts/baoyu_adapter.py verify`。任何终稿哈希不匹配都会阻塞视觉完成。
+## HTML 门禁（schema 1.0 历史长文）
+
+> **schema 1.1 中长文不读本节、不执行本节门禁**——1.1 不调 `gzh-design`、不生成 `output/article.html`、不写 `output/html-qc.md`。schema 1.0 项目仍可走本节以保历史回放。
 
 ## HTML 门禁
 
@@ -32,10 +38,8 @@ HTML 完成要求以下五个文件均存在、非空：
 根 `gzh-design` 返回并验证 `<section>` 片段后，用 `scripts/wrap_preview.py` 创建两份项目预览，再运行：
 
 ```text
-scripts/upgrade_preview_copy.py output/article-copy-preview.html
+python <SKILL_ROOT>/scripts/upgrade_preview_copy.py <文章目录>
 ```
-
-该加固保留原始复制兜底；浏览器支持 Clipboard API 时，把目标片段明确写成 `text/html`，避免 Chromium 在基于选区复制时压平块级层次。加固还必须让本地图片在剪贴板载荷中可移植：复制门禁前，验证 copy preview 中每个本地 `<img>` 来源均已嵌入为 `data:image/...`，或使用另一种已证明能在目标粘贴中存活的资源形式；剪贴板 HTML 中不得残留 `../visuals/...` 路径。缺少或无法识别 `gzhCopy` 函数会阻塞门禁；不得静默声称预览已加固。
 
 然后点击已加固预览的复制按钮，把目标正文粘贴到干净的本地 `contenteditable` 区域或微信兼容的富文本沙箱。确认按钮报告 `clipboard-api`；若报告 `legacy-fallback`，记录降级，且不得假定块级层次仍然保留。检查粘贴后的剪贴板 HTML DOM，而不只看预览：验证内容层级、必需行内样式、链接目标、图片节点及来源、内容顺序，并确认不存在预览专用控件或标签。若已有登录的微信编辑器可用，再额外在那里验证粘贴；默认前置条件不得要求微信登录或凭据。标记阶段完成前，报告复制方法、两个检查宽度、粘贴目标，以及每项 DOM 和布局检查结果。
 
@@ -47,9 +51,5 @@ scripts/upgrade_preview_copy.py output/article-copy-preview.html
 - `gzh-design` 调用记录
 - 9 项排版契约（3 文本级 + 5 视觉级 + `final.md` SHA256 绑定）
 - 浏览器视口检查（≤390 / ≥900）
-- 复制与粘贴（`clipboard-api` / `legacy-fallback` + pasted DOM）
-- `validate_project` 与确定性校验
-- `final.md` SHA256 一致性
-- 阻塞原因（如有）
-
-每项标 ✅ / ❌；❌ 项必须给出具体复现路径。
+- 复制方法与粘贴目标
+- DOM / 布局检查

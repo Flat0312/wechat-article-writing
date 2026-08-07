@@ -8,13 +8,13 @@
 
 | Field | Meaning |
 |---|---|
-| `schema_version` | State schema; v1 uses `1.0` |
+| `schema_version` | State schema; current projects use `1.1` (nine-stage text-only long-essay), historical projects keep `1.0` (twelve-stage with HTML five-file set) |
 | `article_id` | Stable article identifier |
 | `mode` | `full`, `fast`, or `temporary` |
 | `profile_ref` | Portable profile reference or null |
 | `cheat_binding` | Logical Cheat binding or null |
 | `current_stage` | Current stage name |
-| `stage_status` | Status for all twelve stages |
+| `stage_status` | Status for every stage in the project's schema (9 for 1.1, 12 for 1.0) |
 | `artifacts` | Relative path and SHA256 by artifact role |
 | `approvals` | User confirmations with timestamps and artifact hash bindings where required |
 | `skill_routes` | Canonical Skill selected for each routed action |
@@ -25,24 +25,25 @@
 
 ## Stage order and transitions
 
-The authoritative `STAGES` order is exactly:
+Two schemas are recognised:
 
-`brief`, `topic`, `evidence`, `outline`, `draft`, `final`, `prediction`, `visual_plan`, `visuals`, `html`, `publish`, `retro`.
+- `1.0` (historical, HTML five-file set): `brief`, `topic`, `evidence`, `outline`, `draft`, `final`, `prediction`, `visual_plan`, `visuals`, `html`, `publish`, `retro`.
+- `1.1` (current long-essay, pure text): `brief`, `topic`, `evidence`, `outline`, `draft`, `final`, `prediction`, `publish`, `retro`. The `visual_plan` / `visuals` / `html` stages are intentionally absent; no visual or HTML artifact is required for schema 1.1 projects.
 
-`set_stage` changes only `current_stage` and the named `stage_status`; it does not propagate staleness or persist the state. After content or an artifact at an upstream stage changes, the orchestrator MUST explicitly call `invalidate_from` with that changed stage and MUST persist the resulting state before continuing the workflow. A status-only transition is not an upstream content change.
+`set_stage` changes only `current_stage` and the named `stage_status`; it does not propagate staleness or persist the state. After content or an artifact at an upstream stage changes, the orchestrator MUST explicitly call `invalidate_from` with that changed stage and MUST persist the resulting state before continuing the workflow. A status-only transition is not an upstream content change. For schema 1.1 projects, changes at or before `final` invalidate `prediction`, `publish`, and `retro`; for schema 1.0 projects, the same change also invalidates the three visual / HTML stages.
 
 ### Stage → confirmation class mapping
 
 `wechat-article-writing` 公开 5 个用户确认节点（见 `references/onboarding.md` "Five confirmation classes"），
-但 `article-state.json` 跟踪 12 个 stage。本表把确认节点和 stage 显式对齐：
+但 `article-state.json` 跟踪 9（1.1）或 12（1.0）个 stage。本表把确认节点和 stage 显式对齐：
 
-| 确认节点 | 关联 stage | 隐式校验 |
-|---|---|---|
-| 1. 账号配置 / 导入预览 | （项目级，不在 article-state） | `account.json` 校验 |
-| 2. 选题角度 + 受众 | `brief`, `topic` | `evidence` 阶段事实核查后回链 |
-| 3. 大纲事实边界 | `outline` | `evidence` 锚点校验 + `outline` 写前卡片 8 项 |
-| 4. 最终正文 | `draft`, `final` | `final.artifact_sha256` 绑定 + 排版契约 8 项 |
-| 5. 视觉交付（计划 + HTML） | `visual_plan`, `visuals`, `html` | `html-qc.md` 全部通过 + 5 件套存在 |
+| 确认节点 | 关联 stage（1.1） | 关联 stage（1.0） | 隐式校验 |
+|---|---|---|---|
+| 1. 账号配置 / 导入预览 | （项目级，不在 article-state） | （项目级，不在 article-state） | `account.json` 校验 |
+| 2. 选题角度 + 受众 | `brief`, `topic` | `brief`, `topic` | `evidence` 阶段事实核查后回链 |
+| 3. 大纲事实边界 | `outline` | `outline` | `evidence` 锚点校验 + `outline` 写前卡片 8 项 |
+| 4. 最终正文 | `draft`, `final` | `draft`, `final` | `final.artifact_sha256` 绑定 |
+| 5. 视觉交付（news-card / 1.0 历史） | 不适用 | `visual_plan`, `visuals`, `html` | news-card 走独立 21:9 头图交付；1.0 走 `html-qc.md` 全部通过 + 5 件套存在 |
 
 `evidence` 和 `draft` 不单独暴露给用户确认——它们由相邻 stage 的确认隐式覆盖
 （`outline` 必须以 `evidence.md` 为前提；`final` 必须以 `drafts/final.md` 为前提）。
@@ -61,12 +62,16 @@ For HTML-complete long essays, the `html` artifact role is the manual-paste deli
 path MUST be `output/article-copy.html`. The associated HTML contract also retains
 `output/article.html`, `output/article-preview.html`, `output/article-copy-preview.html`, and
 `output/html-qc.md`; the validator enforces the five-file contract for current work while
-preserving completed historical projects.
+preserving completed historical projects. **These five-file HTML rules apply only to
+schema 1.0 long essays; schema 1.1 projects do not record an `html` artifact, do not
+generate an `output/article.html` and do not depend on `gzh-design`.**
 
-For visual completion, `artifacts.visuals.path` should be
+For visual completion in schema 1.0 long essays, `artifacts.visuals.path` should be
 `visuals/assets/manifest.json`. The manifest is the canonical article-local index
 for the one cover and selected body assets; external Skill output directories are
-provenance only.
+provenance only. **Schema 1.1 long essays do not record a `visuals` artifact; the
+`visual_plan` / `visuals` keys are absent from their state.** The news-card pipeline keeps
+its own 21:9 cover flow under `news-card/`, independent of long-essay state.
 
 Every recorded artifact must point to an existing file and include a lowercase
 64-character SHA256 that matches the file bytes. The project validator recomputes

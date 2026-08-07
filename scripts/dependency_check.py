@@ -130,6 +130,13 @@ STAGE_RULES = {
         "optional": ["imagegen"],
     },
     "html": {"required": ["gzh-design"]},
+    "text-only-long-essay": {
+        "required": [
+            "cheat-on-content",
+            "wechat-content-strategy",
+            "human-writing",
+        ],
+    },
     "publish": {"required": ["cheat-on-content"]},
     "retro": {"required": ["cheat-on-content"]},
 }

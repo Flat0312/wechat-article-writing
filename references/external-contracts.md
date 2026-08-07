@@ -38,10 +38,12 @@ total-control Skill applies the smallest compatible local edit, rechecks facts
 and account voice, and records any resulting final-artifact hash change. A
 missing humanizer is allowed; the built-in AI-pattern pass remains mandatory.
 
-## gzh-design author CTA override
+## gzh-design author CTA override（schema 1.0 历史长文）
+
+> **schema 1.1 中长文不调用本节——不调 `gzh-design`、不写 `output/html-qc.md`。** 本节仅 schema 1.0 项目继续执行以保历史回放。
 
 `gzh-design` normally adds an author placeholder and a generic
-“点赞、在看、转发” CTA when the source article has no explicit author. That
+"点赞、在看、转发" CTA when the source article has no explicit author. That
 default is not part of the WeChat total-control output contract.
 
 When the account has not supplied a name, bio, or CTA preference, pass the
@@ -125,14 +127,16 @@ The fixture test covers:
 - the eight topic signal lanes, including the local Xiaohongshu override;
 - long-essay Cheat prediction, publish, and retro receipt paths;
 - the bounded humanizer response;
-- one static 21:9 cover and the five HTML delivery files.
+- news-card 21:9 cover and (schema 1.0 only) the five HTML delivery files. schema 1.1 中长文不进入此 fixture 的 HTML 端。
 
 When an external Skill changes its real output shape, update the external
 Skill and this fixture in the same change review. A fixture passing only proves
 that the total-control adapter still rejects/accepts the declared boundary; it
 does not replace the mandatory real Skill invocation.
 
-## Visual Asset Manifest
+## Visual Asset Manifest（schema 1.0 长文 / news-card 路径）
+
+> **schema 1.1 中长文不读本节、不生成 `visuals/assets/manifest.json`、不调用 `scripts/visual_asset_adapter.py`；其交付以 `final.md` + final 审批绑定为准。** news-card 仍走本节；schema 1.0 历史长文回放亦读本节。
 
 `visuals/assets/manifest.json` is the article project's only delivery index for
 the cover and body illustrations. External visual Skills may render into a

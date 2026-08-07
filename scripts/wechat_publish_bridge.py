@@ -144,11 +144,73 @@ def record_wechat_publish(
         raise PublishError(f"Cheat project does not exist: {cheat_root}")
     state_path = article_project / "article-state.json"
     state = _load_json(state_path)
+    schema_version = state.get("schema_version")
     statuses = state.get("stage_status")
-    if not isinstance(statuses, dict) or statuses.get("html") != "completed":
-        raise PublishError("HTML must be completed before public publication")
-    if "html" in (state.get("stale_artifacts") or []):
-        raise PublishError("HTML is stale; rebuild and approve it before publication")
+    stale_artifacts = state.get("stale_artifacts") or []
+    if schema_version == "1.1":
+        if not isinstance(statuses, dict) or statuses.get("final") != "completed":
+            raise PublishError("final must be completed before public publication")
+        if "final" in stale_artifacts:
+            raise PublishError(
+                "final is stale; rebuild and approve it before publication"
+            )
+        approvals = state.get("approvals") or {}
+        final_approval = approvals.get("final") or {}
+        artifacts = state.get("artifacts") or {}
+        final_artifact = artifacts.get("final") or {}
+        if (
+            not isinstance(final_approval, dict)
+            or final_approval.get("artifact_role") != "final"
+        ):
+            raise PublishError("final approval must bind the final artifact")
+        approval_hash = final_approval.get("artifact_sha256")
+        final_artifact_hash = (
+            final_artifact.get("sha256")
+            if isinstance(final_artifact, dict)
+            else None
+        )
+        if approval_hash is None or final_artifact_hash is None:
+            raise PublishError(
+                "final artifact and binding approval must be recorded before publication"
+            )
+        if approval_hash != final_artifact_hash:
+            raise PublishError(
+                "final approval hash does not match the final artifact"
+            )
+        # Re-read the final artifact on disk to defeat post-approval tampering.
+        # The recorded sha256 only proves the bytes that were once hashed; if
+        # the file changed without re-running `article_state record`, the
+        # approval binding still passes but the actual content is now stale.
+        recorded_path = final_artifact.get("path")
+        if not isinstance(recorded_path, str) or not recorded_path:
+            raise PublishError(
+                "final artifact must record a portable relative path"
+            )
+        target = article_project / recorded_path.replace("\\", "/")
+        if not target.is_file():
+            raise PublishError(
+                f"final artifact file is missing on disk: {recorded_path}"
+            )
+        actual_hash = _sha256(target)
+        if actual_hash != final_artifact_hash:
+            raise PublishError(
+                "final artifact bytes on disk no longer match the recorded hash; "
+                "rebuild and re-approve the final before publication"
+            )
+        if actual_hash != approval_hash:
+            raise PublishError(
+                "final artifact bytes on disk no longer match the approval binding; "
+                "rebuild and re-approve the final before publication"
+            )
+    elif schema_version == "1.0":
+        if not isinstance(statuses, dict) or statuses.get("html") != "completed":
+            raise PublishError("HTML must be completed before public publication")
+        if "html" in stale_artifacts:
+            raise PublishError(
+                "HTML is stale; rebuild and approve it before publication"
+            )
+    else:
+        raise PublishError(f"unsupported schema_version: {schema_version!r}")
     if not user_confirmed:
         raise PublishError("explicit user confirmation is required for public publication")
 
@@ -160,7 +222,7 @@ def record_wechat_publish(
     article_dir = _article_dir(article_project)
     publish_path = article_project / "publish.json"
     payload = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": schema_version,
         "status": "publicly_published",
         "platform": "wechat",
         "article_dir": article_dir,
@@ -177,14 +239,19 @@ def record_wechat_publish(
         ("public_url", "published_at", "cheat_prediction_file", "cheat_prediction_sha256"),
     )
     if existing_publish:
-        if existing_publish.get("status") not in (None, "html_ready", "publicly_published"):
+        if existing_publish.get("status") not in (
+            None,
+            "text_ready",
+            "html_ready",
+            "publicly_published",
+        ):
             raise PublishError("publish.json has an unsupported status")
         payload = {**existing_publish, **payload}
 
     publish_bytes = _json_bytes(payload)
     publish_hash = sha256(publish_bytes).hexdigest()
     reference_payload = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": schema_version,
         "status": "publicly_published",
         "platform": "wechat",
         "article_dir": article_dir,

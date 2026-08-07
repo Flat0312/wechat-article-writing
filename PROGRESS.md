@@ -107,6 +107,12 @@
 - 反向验证 pass：删「只生成一张静态 `21:9`」一字改 `21:10`，对应 test 立即红；还原后复绿 ✔。
 - 阶段小结：契约 12 项全绿；只改允许清单内文件（SKILL.md、references/execution.md、references/quality-gates.md、references/execution/*.md、references/quality-gates/*.md、tools/tokdiet.py）；tests/、scripts/、只读 sha256 均未动。
 
+## 纯文字交付改造第四轮（A 授权基线更新，2026-08-07）
+- 目标：完成 schema 1.1 纯文字改造，让代码、Skill 路由、发布契约和 tokdiet 基线一致，同时保留 1.0 历史兼容。
+- 顺序：任务 0 基线（166 OK / weight_check PASS / tokdiet FAIL）→ 任务 1 恢复 11 个活动契约（SKILL.md/README.md/agents + 8 个 references/ + recovery/execution/quality-gates 分片）→ 任务 2 补 6 类脚手架与发布契约测试 → 任务 3 重 init baseline（用 A 授权）并反向验证 → 166/0、tokdiet/weight_check PASS、tools/tokdiet.py 无 diff。
+- 最大风险：CRLF 漂移让 _baseline 记的 LF hash 跟工作区 CRLF 实际 hash 对不上（autocrlf=true）；须保证已 init baseline 后所有未改文件工作区 hash == git HEAD blob hash。
+- 让步：1.0 文档清理质量 > 1.1 描述文字数量；task 3 baseline 仍按本轮 task 2/3 最终文件状态重算（不重算以掩盖失败）。
+
 ## 知识收尾（neat-freak，2026-08-07）
 
 ### 清场收据
@@ -115,3 +121,10 @@
 - 推送：`git push origin main` 因环境无外网出口两次失败（github.com:443 超时），**本地已提交，推送待网络恢复后补执行**。
 - 清理（用户确认后执行）：`_baseline_prev/`、`.pytest_cache/`、`__pycache__/`、本地 `master` 分支（75db9b9）删除。
 - 遗留项：`origin/codex/round2-skill-optimization`（e66aa41）为无合并旧分支，未处理。
+
+## 纯文字交付最终收尾（2026-08-07）
+
+- 修正 `references/onboarding.md` 的入口说明：schema 1.1 临时中长文只走调研、写作、编辑、终稿、预测与纯文字发布确认；视觉/HTML 仅保留给 schema 1.0 历史项目和 news-card。
+- 按用户已选 A 方案重新运行 `python tools/tokdiet.py init`，同步 `_baseline/execution.md`、`_baseline/quality-gates.md` 与只读哈希；未修改 `tools/tokdiet.py`。
+- 验收：`python -m unittest discover -s tests -p "test_*.py"` = **166 tests OK**；`tokdiet` = **PASS**；`weight_check` = **PASS**；`dependency_check` 的 `text-only-long-essay` 与历史 `html` 均通过。
+- CLI 反向验收：默认 init 生成 schema 1.1 / 9 阶段且无 `output/`、`visuals/`；显式 `--schema-version 1.0` 仍生成 12 阶段历史骨架；只读哈希与 HEAD 未改文件核对通过。

@@ -1,4 +1,4 @@
 interface:
   display_name: "WeChat Article Writing"
-  short_description: "从账号状态、内容策略与风格学习到配图、排版和复盘的公众号总控工作流"
-  default_prompt: "Use $wechat-article-writing to create or improve a Chinese WeChat article through verified delivery and, when enabled, continuously observe the account's approved final drafts for style evolution."
+  short_description: "从账号状态、内容策略与风格学习到终稿落盘、发布登记和复盘的公众号总控工作流（中长文 schema 1.1 纯文字交付，资讯贴图走独立 21:9 头图分支）"
+  default_prompt: "Use $wechat-article-writing to create or improve a Chinese WeChat article through verified pure-text delivery (schema 1.1) or news-card image generation, and, when enabled, continuously observe the account's approved final drafts for style evolution."

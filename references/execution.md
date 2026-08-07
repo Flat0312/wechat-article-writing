@@ -1,11 +1,11 @@
 ---
 name: WeChat Article Execution
-description: Detailed execution runbook for dependency checks, project setup, article pipeline, approvals, visuals, HTML upgrades, publishing, and recovery.
+description: Detailed execution runbook for dependency checks, project setup, schema 1.1 long-essay, news-card, publishing, and recovery.
 ---
 
 # WeChat Article Execution
 
-详细执行手册，和 `SKILL.md` 一起阅读。前者保留核心约束和入口判断，这里保留可执行步骤、产物路径和阶段命令。
+详细执行手册，和 `SKILL.md` 一起阅读。前者保留核心约束和入口判断，这里保留可执行步骤、产物路径和阶段命令。schema 1.1 中长文是默认入口，schema 1.0 路径（HTML 五件套）仅作历史兼容。
 
 ## 第一步：选择入口
 
@@ -15,24 +15,11 @@ description: Detailed execution runbook for dependency checks, project setup, ar
 - 新建长期账号。
 - 临时创作单篇文章。
 
-用户给出目录时先只读检查。用户已经给出明确主题、素材或初稿时保留它们，不强迫回到选题起点。
+用户给出目录时先只读检查；已给出明确主题、素材或初稿时保留它们，不强迫回到选题起点。
 
 ### 项目工具契约
 
-若已确认 workspace 根包含 `tools/project_ops.py` 与
-`docs/PROJECT-GOVERNANCE.md`，先读取项目治理约定，再执行通用流水线。项目命令
-只由本总控调用，两个子 Skill 只返回产物与结果，不自行刷新项目状态或 Skill 锁：
-
-- 日常一致性：`python tools/project_ops.py audit`
-- 看板刷新：`python tools/project_ops.py status --write`
-- 校准诊断：`python tools/project_ops.py calibration --write`
-- 热点收件箱：`python tools/project_ops.py trends --write`
-- 改稿候选：`python tools/project_ops.py writing-learning --write`
-- Skill 经兼容性测试后：`python tools/project_ops.py skill-lock --write`，随后再次
-  运行 `audit`
-
-只在对应项目阶段需要时运行带 `--write` 的命令。不得把项目命令分散给
-`wechat-content-strategy` 或 `wechat-style-learning`。
+若 workspace 根含 `tools/project_ops.py` 与 `docs/PROJECT-GOVERNANCE.md`，先读治理约定；项目命令只由总控按需调用 `audit`、`status --write`、`calibration --write`、`trends --write`、`writing-learning --write`、`skill-lock --write`。
 
 ## 第二步：检查依赖
 
@@ -45,7 +32,7 @@ python <SKILL_ROOT>/scripts/dependency_check.py --stage <STAGE>
 
 ### 依赖缺失处理
 
-检查返回 `ok: false` 时，按 `missing_required`、`missing_any`、`script_runtime.missing_required` 或 `cli_runtime.missing_required` 列表给出具体安装指引，不要只报错。`skill_presence` 只说明 frontmatter Skill 是否被发现；`script_runtime` 单独说明脚本入口、语法和 Python import/version；`cli_runtime` 单独说明外部命令及其解析路径。三类结果都要保留在阶段回执中，不能用 Skill 目录存在覆盖 runtime 失败。常见缺失与安装命令：
+`ok: false` 时按四个 `missing` 列表给安装指引，并保留 `skill_presence`、`script_runtime`、`cli_runtime` 三类回执；目录发现不能覆盖 runtime 失败。常见缺失与安装命令：
 
 | 缺失 Skill | 安装命令（对用户说） |
 |---|---|
@@ -61,29 +48,18 @@ python <SKILL_ROOT>/scripts/dependency_check.py --stage <STAGE>
 | `guizang-social-card-skill` | `帮我安装 https://github.com/op7418/guizang-social-card-skill` |
 | `ian-xiaohei-illustrations` | `帮我安装 https://github.com/helloianneo/ian-xiaohei-illustrations` |
 | `baoyu-article-illustrator` | `帮我安装 https://github.com/JimLiu/baoyu-skills`（只需 baoyu-article-illustrator） |
-| `gzh-design` | `帮我安装 https://github.com/isjiamu/gzh-design-skill` |
-| `imagegen` | 可选的 Codex 图片 Skill；未发现时仅提示，由所选路线继续解析可用图片后端 |
+| `gzh-design` | `帮我安装 https://github.com/isjiamu/gzh-design-skill`（仅 1.0 长文） |
+| `imagegen` | 可选 Codex 图片 Skill；未发现时仅提示，由所选路线继续解析可用后端 |
 
-正文配图至少需要 `ian-xiaohei-illustrations` 或 `baoyu-article-illustrator` 其中一条轨道可用；两条都不可用时阻塞视觉阶段。`optional_missing: ["imagegen"]` 只表示未发现独立的 `imagegen` Skill，不代表当前 runtime 一定没有原生图片工具。由所选路线继续解析真实后端；确实没有可用后端时才阻塞该配图资产。
+正文配图至少需要 `ian-xiaohei-illustrations` 或 `baoyu-article-illustrator` 之一可用；两条都不可用时阻塞视觉阶段。**schema 1.1 长文不要求正文配图轨道**——只有 1.0 长文和 news-card 触发该检查。
 
-读取 `references/skill-routing.md` 决定真实调用对象，并按 `references/quality-gates.md` 执行对应门禁；本节不复述视觉、HTML 或 Cheat 的 owner 规则。
+读取 `references/skill-routing.md` 决定真实调用对象，并按 `references/quality-gates.md` 执行门禁；schema 1.1 中长文以 `text-only-long-essay` 作为 dependency_check 入口（cheat-on-content、wechat-content-strategy、human-writing，不要求 gzh-design）。
 
-系统还必须安装 Git。`validate_project.py profile` 使用的 `git init` 和 `git check-ignore` 只能在隔离的临时 Git 仓库中运行，不得写入被验证账号目录。它会在那里验证 `bindings.local.json` 被 `.gitignore` 排除；Git 不可用时账号验证不得通过。
+Git 必须可用；`validate_project.py profile` 的 Git 操作只能在隔离临时仓库，不能写入账号目录。
 
 ### 跨 Skill 稳定验证接口
 
-对伴生 Skill（如 `wechat-style-learning`）承诺稳定的验证接口只有一个：
-
-```text
-python <WECHAT_ARTICLE_ROOT>/scripts/validate_project.py profile <账号目录>
-```
-
-稳定承诺范围：`profile` 子命令存在、JSON 输出形状
-`{"ok": bool, "errors": [...]}` 以及退出码（0 通过 / 1 失败）。`article`
-子命令和验证器内部模块（`validate_profile.py`、`validate_article.py`、
-`validate_html_delivery.py`、`security_scan.py`、`project_checks.py`）属于
-本 Skill 内部实现，不向伴生 Skill 承诺稳定；伴生 Skill 不得直接 import
-这些模块，只能调用上面的 CLI。
+对伴生 Skill 承诺稳定的验证接口只有 `python <WECHAT_ARTICLE_ROOT>/scripts/validate_project.py profile <账号目录>`，输出 `{"ok": bool, "errors": [...]}`，退出码 0/1。`article` 子命令和验证器内部模块（`validate_profile.py`、`validate_article.py`、`validate_html_delivery.py`、`security_scan.py`、`project_checks.py`）属于本 Skill 内部实现，不向伴生 Skill 承诺稳定。
 
 ## 第三步：建立状态
 
@@ -92,6 +68,5 @@ python <WECHAT_ARTICLE_ROOT>/scripts/validate_project.py profile <账号目录>
 ## 第四步：执行文章流水线
 
 选题：执行 [`references/topic-signal-registry.md`](topic-signal-registry.md) 并确认角度 → `topic-brief.md`。
-预测：先验证 `cheat-form-receipt.json`（根 Cheat 完成且 rubric 已适配），再运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，调用根 Cheat 的 predict → `prediction-input-reference.json`。
-发布：用户确认公开后先真实调用根 Cheat 的 publish，再运行总控发布桥写入 `publish-reference.json`。Cheat 的公开路由、根调用与排除规则只见 `SKILL.md` 核心约束第 1 条。
-
+预测：先验证 `cheat-form-receipt.json`，再运行 `scripts/cheat_prediction_adapter.py` 生成哈希绑定的只读 Cheat 输入，调用根 Cheat predict。
+发布：用户确认公开后先真实调用根 Cheat publish，再运行总控发布桥写入 `publish-reference.json`。Cheat 公开路由与排除规则只见 `SKILL.md` 核心约束第 1 条。
