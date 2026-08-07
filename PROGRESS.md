@@ -106,3 +106,12 @@
 - weight_check：`RESULT: PASS`。
 - 反向验证 pass：删「只生成一张静态 `21:9`」一字改 `21:10`，对应 test 立即红；还原后复绿 ✔。
 - 阶段小结：契约 12 项全绿；只改允许清单内文件（SKILL.md、references/execution.md、references/quality-gates.md、references/execution/*.md、references/quality-gates/*.md、tools/tokdiet.py）；tests/、scripts/、只读 sha256 均未动。
+
+## 知识收尾（neat-freak，2026-08-07）
+
+### 清场收据
+- 六面事实审计：代码/运行态（pytest 153 passed、tokdiet PASS、weight_check PASS、junction 安装面有效）/文档/规则 verified-current；记忆 generated-read-only（.workbuddy，已 gitignore）。
+- 提交 `7cf6a12` 入库：契约回绿改动 + 分片、tools/、基线、PROGRESS/BLOCKED 收据；删除 MERGE-LOG.md/OPTIMIZATION-PLAN.md（遗留规划件）。
+- 推送：`git push origin main` 因环境无外网出口两次失败（github.com:443 超时），**本地已提交，推送待网络恢复后补执行**。
+- 清理（用户确认后执行）：`_baseline_prev/`、`.pytest_cache/`、`__pycache__/`、本地 `master` 分支（75db9b9）删除。
+- 遗留项：`origin/codex/round2-skill-optimization`（e66aa41）为无合并旧分支，未处理。
